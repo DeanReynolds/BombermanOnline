@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <AssemblyName>ShitGame</AssemblyName>
+    <AssemblyName>BombermanOnline</AssemblyName>
     <MonoGamePlatform>Windows</MonoGamePlatform>
     <PublishTrimmed>true</PublishTrimmed>
     <PublishReadyToRun>false</PublishReadyToRun>
@@ -11,6 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Dcrew.Camera" Version="1.5.3" />
     <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.0.1375-develop" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.0.1375-develop" />
     <PackageReference Include="Apos.Input" Version="1.0.0" />

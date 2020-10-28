@@ -1,7 +1,29 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
-    "configurations": []
+    "configurations": [
+        {
+            "name": "Run Core platform",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "buildCore",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/Platforms/Core/bin/Debug/netcoreapp3.1/BombermanOnline.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/Platforms/Core",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Run DirectX platform",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "buildDirectX",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/Platforms/DirectX/bin/Debug/netcoreapp3.1/BombermanOnline.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/Platforms/DirectX",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        }
+    ]
 }
