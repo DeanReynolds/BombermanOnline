@@ -247,6 +247,10 @@ namespace BombermanOnline {
             Put(su.UIntValue);
         }
         public void Put(float value, float min, float max, int numberOfBits) => Write((uint)(((1 << numberOfBits) - 1) * ((value - min) / (max - min))), numberOfBits);
+        public void Put(Vector2 xy) {
+            Put(xy.X);
+            Put(xy.Y);
+        }
         public void Put(Vector2 point, Rectangle rect) {
             Put(rect.Left, rect.Right, (int)point.X);
             Put(rect.Top, rect.Bottom, (int)point.Y);

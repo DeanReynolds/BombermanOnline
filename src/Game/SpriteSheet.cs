@@ -17,14 +17,14 @@ namespace BombermanOnline {
                     continue;
                 var s = line.Split(';');
                 var name = s[0];
-                var isRotated = int.Parse(s[1]) == 1;
+                // var isRotated = int.Parse(s[1]) == 1;
                 var source = new Rectangle(int.Parse(s[2]), int.Parse(s[3]), int.Parse(s[4]), int.Parse(s[5]));
-                var origin = new Vector2(float.Parse(s[8]), float.Parse(s[9]));
+                var origin = new Vector2(float.Parse(s[8]) * source.Width, float.Parse(s[9]) * source.Height);
                 sprites.Add(name,
                     new Sprite {
                         Texture = texture,
                             Source = source,
-                            IsRotated = isRotated,
+                            // IsRotated = isRotated,
                             Origin = origin
                     });
             }

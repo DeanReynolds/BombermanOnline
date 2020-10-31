@@ -12,6 +12,8 @@ namespace BombermanOnline {
     sealed class G : Game {
         public static new ContentManager Content { get; private set; }
         public static SpriteBatch SB { get; private set; }
+        public static Viewport Viewport { get; private set; }
+        public static Rectangle RenderRect { get; private set; }
         public static Scr Scr { get; private set; }
         public static SpriteSheet Sprites { get; private set; }
         public static Tile[, ] Tiles { get; private set; }
@@ -77,28 +79,50 @@ namespace BombermanOnline {
                 PreferredBackBufferWidth = 1280,
                 PreferredBackBufferHeight = 720,
                 IsFullScreen = false,
-                HardwareModeSwitch = false
+                HardwareModeSwitch = false,
+                SynchronizeWithVerticalRetrace = false
             };
             Content = base.Content;
             Content.RootDirectory = "Content";
+        }
+
+        private void OnScreenSizeChange(object sender, EventArgs e) {
+            float outputAspectRatio = Window.ClientBounds.Width / (float)Window.ClientBounds.Height,
+                preferredAspectRatio = 1;
+            if (preferredAspectRatio > 0f) {
+                if (outputAspectRatio <= preferredAspectRatio) {
+                    int presentHeight = (int)((Window.ClientBounds.Width / preferredAspectRatio) + .5f);
+                    int barHeight = (Window.ClientBounds.Height - presentHeight) / 2;
+                    RenderRect = new Rectangle(0, barHeight, Window.ClientBounds.Width, presentHeight);
+                } else {
+                    int presentWidth = (int)((Window.ClientBounds.Height * preferredAspectRatio) + .5f);
+                    int barWidth = (Window.ClientBounds.Width - presentWidth) / 2;
+                    RenderRect = new Rectangle(barWidth, 0, presentWidth, Window.ClientBounds.Height);
+                }
+            }
         }
 
         protected override void Initialize() {
             Window.Title = "Bomberman Online";
             Window.AllowUserResizing = true;
             IsMouseVisible = true;
+            IsFixedTimeStep = false;
             InputHelper.Setup(this);
             foreach (var s in Assembly.GetExecutingAssembly().GetTypes().Where(x => x.IsClass && !x.IsAbstract && x.IsSubclassOf(typeof(Scr))))
                 _scr.Add(s, (Scr)Activator.CreateInstance(s));
-            Scr = _scr[typeof(GameScr)];
+            Scr = _scr[typeof(MainScr)];
             base.Initialize();
+            Window.ClientSizeChanged += OnScreenSizeChange;
+            OnScreenSizeChange(null, null);
+            Bombs.Init(100);
+            Animations.Init(375);
         }
 
         protected override void LoadContent() {
             SB = new SpriteBatch(GraphicsDevice);
+            Viewport = GraphicsDevice.Viewport;
             SpriteBatchExtensions.Init();
             Sprites = SpriteSheet.Load(Content.Load<Texture2D>("sprites"), "sprites.dat");
-            Bombs.Init(50);
             Scr.Open();
         }
 
@@ -108,8 +132,12 @@ namespace BombermanOnline {
             InputHelper.UpdateSetup();
             if (_quit.Pressed())
                 Exit();
-            base.Update(gameTime);
             Scr.Update();
+            if (NetServer.IsRunning)
+                NetServer.PollEvents();
+            else if (NetClient.IsRunning)
+                NetClient.PollEvents();
+            base.Update(gameTime);
             InputHelper.UpdateCleanup();
         }
 
@@ -117,6 +145,14 @@ namespace BombermanOnline {
             GraphicsDevice.Clear(Color.Black);
             Scr.Draw();
             base.Draw(gameTime);
+        }
+
+        protected override void OnExiting(object sender, EventArgs args) {
+            if (NetServer.IsRunning)
+                NetServer.Stop();
+            else if (NetClient.IsRunning)
+                NetClient.Stop();
+            base.OnExiting(sender, args);
         }
     }
 }

@@ -4,7 +4,9 @@ using LiteNetLib;
 
 namespace BombermanOnline {
     static class NetServer {
-        public const int PORT = 8989;
+        public const int PORT = 6121;
+
+        const float SYNC_PLAYERS_TIME = 1 / 60f;
 
         internal const int PLAYER_SUB_IDS = 1;
 
@@ -12,7 +14,9 @@ namespace BombermanOnline {
 
         public static bool IsRunning => _manager.IsRunning;
 
-        public enum PacketId { PLAYER }
+        public enum PacketId { PLAYER, PLACE_BOMB, SPAWN_POWER, SET_POWER, CHAT }
+
+        static double _syncPlayersTimer;
 
         static readonly EventBasedNetListener _listener = new EventBasedNetListener();
         static readonly NetManager _manager = new NetManager(_listener) { AutoRecycle = true, UpdateTime = 15 };
@@ -33,27 +37,50 @@ namespace BombermanOnline {
                 _packets.Add((int)p, w);
             }
             _listener.NetworkReceiveEvent += (peer, readerOutdated, delieryMethod) => {
+                var j = _players[peer];
+                if (readerOutdated.EndOfData) {
+                    _peers.Add(j, peer);
+                    var w = CreatePacket(PacketId.PLAYER); {
+                        w.Put(0, PLAYER_SUB_IDS, 0);
+                        w.Put(true);
+                        w.PutPlayerId(j);
+                        SendToAll(w, DeliveryMethod.ReliableOrdered, peer);
+                    }
+                    return;
+                }
                 _r.ReadFrom(readerOutdated);
                 var packetId = (NetClient.PacketId)_r.ReadInt(0, NetClient.PACKET_MAX_ID);
-                var p = _players[peer];
+                switch (packetId) {
+                    case NetClient.PacketId.PLAYER:
+                        Players.XY[j] = _r.ReadVector2();
+                        Players.Input[j] = 0;
+                        if (_r.ReadBool())
+                            if (_r.ReadInt(0, 1) == 0)
+                                Players.Input[j] |= Players.INPUT.MOV_UP;
+                            else
+                                Players.Input[j] |= Players.INPUT.MOV_DOWN;
+                        if (_r.ReadBool())
+                            if (_r.ReadInt(0, 1) == 0)
+                                Players.Input[j] |= Players.INPUT.MOV_LEFT;
+                            else
+                                Players.Input[j] |= Players.INPUT.MOV_RIGHT;
+                        Players.Dir[j] = (Players.DIR)_r.ReadInt(0, 3);
+                        break;
+                }
             };
             _listener.PeerConnectedEvent += peer => {
                 var p = _players[peer];
-                _peers.Add(p, peer);
+                Players.Insert(p);
                 _initialData.Clear(_initialDataStart); {
                     PutPlayerId(_initialData, p);
-                    for (int j = 0; j < Players.MaxPlayers; j++) {
-                        if (j == p)
-                            continue;
+                    void PutPlayer(int j) {
                         _initialData.PutPlayerId(j);
+                        _initialData.Put(0, 3, (int)Players.Dir[j]);
                     }
+                    PutPlayer(Players.LocalID);
+                    foreach (var j in _peers.Keys)
+                        PutPlayer(j);
                     Send(_initialData, peer, DeliveryMethod.ReliableOrdered);
-                }
-                var w = CreatePacket(PacketId.PLAYER); {
-                    w.Put(0, PLAYER_SUB_IDS, 0);
-                    w.Put(true);
-                    w.PutPlayerId(Players.LocalID);
-                    SendToAll(w, DeliveryMethod.ReliableOrdered, peer);
                 }
             };
             _listener.PeerDisconnectedEvent += (peer, disconnectInfo) => {
@@ -77,9 +104,9 @@ namespace BombermanOnline {
 
         public static void Host(int maxPlayers) {
             _manager.Start(PORT);
-            _initialData.Clear(0);
             Players.Init(maxPlayers);
-            _initialData.Put((byte)(Players.MaxPlayers - 1));
+            _initialData.Clear();
+            _initialData.Put((byte)(maxPlayers - 1));
         }
         public static void Stop() => _manager.Stop(true);
 
@@ -91,7 +118,39 @@ namespace BombermanOnline {
         public static void PutPlayerId(this NetWriter writer, int playerId) => writer.Put(0, Players.MaxPlayers - 1, playerId);
         public static int ReadPlayerId(this NetReader reader) => reader.ReadInt(0, Players.MaxPlayers - 1);
 
-        public static void PollEvents() => _manager.PollEvents();
+        public static void PollEvents() {
+            _manager.PollEvents();
+            if ((_syncPlayersTimer += T.DeltaFull) >= SYNC_PLAYERS_TIME) {
+                _syncPlayersTimer -= SYNC_PLAYERS_TIME;
+                foreach (var p in _peers.Keys) {
+                    var w = CreatePacket(PacketId.PLAYER);
+                    w.Put(0, PLAYER_SUB_IDS, 1);
+                    for (var j = 0; j < Players.MaxPlayers; j++)
+                        if (j != p && !Players.Flags[j].HasFlag(Players.FLAGS.IS_DEAD)) {
+                            PutPlayerId(w, j);
+                            w.Put(Players.XY[j]);
+                            if (Players.Input[j].HasFlag(Players.INPUT.MOV_UP)) {
+                                w.Put(true);
+                                w.Put(0, 1, 0);
+                            } else if (Players.Input[j].HasFlag(Players.INPUT.MOV_DOWN)) {
+                                w.Put(true);
+                                w.Put(0, 1, 1);
+                            } else
+                                w.Put(false);
+                            if (Players.Input[j].HasFlag(Players.INPUT.MOV_LEFT)) {
+                                w.Put(true);
+                                w.Put(0, 1, 0);
+                            } else if (Players.Input[j].HasFlag(Players.INPUT.MOV_RIGHT)) {
+                                w.Put(true);
+                                w.Put(0, 1, 1);
+                            } else
+                                w.Put(false);
+                            w.Put(0, 3, (int)Players.Dir[j]);
+                        }
+                    Send(w, _peers[p], DeliveryMethod.Sequenced);
+                }
+            }
+        }
 
         public static void SendToAll(NetWriter writer, DeliveryMethod deliveryMethod) => _manager.SendToAll(writer.Data, 0, writer.LengthBytes, deliveryMethod);
         public static void SendToAll(NetWriter writer, DeliveryMethod deliveryMethod, NetPeer excludePeer) => _manager.SendToAll(writer.Data, 0, writer.LengthBytes, deliveryMethod, excludePeer);

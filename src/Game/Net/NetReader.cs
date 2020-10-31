@@ -92,7 +92,7 @@ namespace BombermanOnline {
 
         public void ReadFrom(NetDataReader reader) {
             _data = reader.RawData;
-            _readBits = _userDataOffsetBits = reader.UserDataOffset * 8;
+            _readBits = _userDataOffsetBits = reader.UserDataOffset << 3;
             _userDataOffsetBits += 3;
             _lengthBits = (reader.RawDataSize << 3) - ReadByte(3);
         }
@@ -100,7 +100,7 @@ namespace BombermanOnline {
         public bool ReadBool() {
             var retval = ReadByte(_data, 1, _readBits);
             _readBits += 1;
-            return (retval == 1);
+            return retval == 1;
         }
         public sbyte ReadSByte() {
             var retval = ReadByte(_data, 8, _readBits);
@@ -155,6 +155,7 @@ namespace BombermanOnline {
             return BitConverter.ToSingle(bytes, 0);
         }
         public float ReadFloat(float min, float max, int numberOfBits) => min + ((float)ReadUInt(numberOfBits) / ((1 << numberOfBits) - 1) * (max - min));
+        public Vector2 ReadVector2() => new Vector2(ReadFloat(), ReadFloat());
         public Vector2 ReadPoint(Rectangle rect) => new Vector2(ReadInt(rect.Left, rect.Right), ReadInt(rect.Top, rect.Bottom));
         public float ReadAngle(int bits) => MathHelper.ToRadians((int)ReadUInt(bits) / (float)(1 << bits) * 360) - MathF.PI;
         public long ReadLong() {
