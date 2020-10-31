@@ -88,7 +88,20 @@ namespace BombermanOnline {
                     int x = (int)XY[LocalID].X >> Tile.BITS_PER_SIZE,
                         y = (int)XY[LocalID].Y >> Tile.BITS_PER_SIZE;
                     if (!Bombs.HasBomb(x, y, out _)) {
-                        Bombs.Spawn(x, y, 0);
+                        var flags = (Bombs.FLAGS)0;
+                        if (NetServer.IsRunning) {
+                            var w = NetServer.CreatePacket(NetServer.Packets.PLACE_BOMB);
+                            w.PutTileXY(x, y);
+                            w.Put(0, Bombs.FLAGS_COUNT, (int)flags);
+                            w.PutPlayerID(LocalID);
+                            NetServer.SendToAll(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                        } else if (NetClient.IsRunning) {
+                            var w = NetClient.CreatePacket(NetClient.Packets.PLACE_BOMB);
+                            w.PutTileXY(x, y);
+                            w.Put(0, Bombs.FLAGS_COUNT, (int)flags);
+                            NetClient.Send(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                        }
+                        Bombs.Spawn(x, y, flags, LocalID);
                     }
                 }
             }

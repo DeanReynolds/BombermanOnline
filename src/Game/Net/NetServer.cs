@@ -14,7 +14,7 @@ namespace BombermanOnline {
 
         public static bool IsRunning => _manager.IsRunning;
 
-        public enum PacketId { PLAYER, PLACE_BOMB, SPAWN_POWER, SET_POWER, CHAT }
+        public enum Packets { PLAYER, PLACE_BOMB, SYNC_BOMBS, SPAWN_POWER, SET_POWER, CHAT }
 
         static double _syncPlayersTimer;
 
@@ -29,7 +29,7 @@ namespace BombermanOnline {
         static readonly NetReader _r = new NetReader();
 
         static NetServer() {
-            var packets = Enum.GetValues(typeof(PacketId));
+            var packets = Enum.GetValues(typeof(Packets));
             PACKET_MAX_ID = packets.Length - 1;
             foreach (var p in packets) {
                 var w = new NetWriter();
@@ -40,41 +40,43 @@ namespace BombermanOnline {
                 var j = _players[peer];
                 if (readerOutdated.EndOfData) {
                     _peers.Add(j, peer);
-                    var w = CreatePacket(PacketId.PLAYER); {
+                    var w = CreatePacket(Packets.PLAYER); {
                         w.Put(0, PLAYER_SUB_IDS, 0);
                         w.Put(true);
-                        w.PutPlayerId(j);
+                        w.PutPlayerID(j);
                         SendToAll(w, DeliveryMethod.ReliableOrdered, peer);
                     }
                     return;
                 }
                 _r.ReadFrom(readerOutdated);
-                var packetId = (NetClient.PacketId)_r.ReadInt(0, NetClient.PACKET_MAX_ID);
-                switch (packetId) {
-                    case NetClient.PacketId.PLAYER:
-                        Players.XY[j] = _r.ReadVector2();
-                        Players.Input[j] = 0;
-                        if (_r.ReadBool())
-                            if (_r.ReadInt(0, 1) == 0)
-                                Players.Input[j] |= Players.INPUT.MOV_UP;
-                            else
-                                Players.Input[j] |= Players.INPUT.MOV_DOWN;
-                        if (_r.ReadBool())
-                            if (_r.ReadInt(0, 1) == 0)
-                                Players.Input[j] |= Players.INPUT.MOV_LEFT;
-                            else
-                                Players.Input[j] |= Players.INPUT.MOV_RIGHT;
-                        Players.Dir[j] = (Players.DIR)_r.ReadInt(0, 3);
-                        break;
+                var p = (NetClient.Packets)_r.ReadInt(0, NetClient.PACKET_MAX_ID);
+                if (p == NetClient.Packets.PLAYER) {
+                    Players.XY[j] = _r.ReadVector2();
+                    Players.Input[j] = 0;
+                    if (_r.ReadBool())
+                        if (_r.ReadInt(0, 1) == 0)
+                            Players.Input[j] |= Players.INPUT.MOV_UP;
+                        else
+                            Players.Input[j] |= Players.INPUT.MOV_DOWN;
+                    if (_r.ReadBool())
+                        if (_r.ReadInt(0, 1) == 0)
+                            Players.Input[j] |= Players.INPUT.MOV_LEFT;
+                        else
+                            Players.Input[j] |= Players.INPUT.MOV_RIGHT;
+                    Players.Dir[j] = (Players.DIR)_r.ReadInt(0, 3);
+                } else if (p == NetClient.Packets.PLACE_BOMB) {
+                    _r.ReadTileXY(out var x, out var y);
+                    var flags = (Bombs.FLAGS)_r.ReadInt(0, Bombs.FLAGS_COUNT);
+                    Bombs.Spawn(x, y, flags, j);
                 }
             };
             _listener.PeerConnectedEvent += peer => {
                 var p = _players[peer];
                 Players.Insert(p);
                 _initialData.Clear(_initialDataStart); {
-                    PutPlayerId(_initialData, p);
+                    PutPlayerID(_initialData, p);
                     void PutPlayer(int j) {
-                        _initialData.PutPlayerId(j);
+                        _initialData.PutPlayerID(j);
                         _initialData.Put(0, 3, (int)Players.Dir[j]);
                     }
                     PutPlayer(Players.LocalID);
@@ -85,10 +87,10 @@ namespace BombermanOnline {
             };
             _listener.PeerDisconnectedEvent += (peer, disconnectInfo) => {
                 var p = _players[peer];
-                var w = CreatePacket(PacketId.PLAYER); {
+                var w = CreatePacket(Packets.PLAYER); {
                     w.Put(0, PLAYER_SUB_IDS, 0);
                     w.Put(false);
-                    w.PutPlayerId(p);
+                    w.PutPlayerID(p);
                     SendToAll(w, DeliveryMethod.ReliableOrdered, peer);
                 }
                 Players.Remove(p);
@@ -110,24 +112,21 @@ namespace BombermanOnline {
         }
         public static void Stop() => _manager.Stop(true);
 
-        public static NetWriter CreatePacket(PacketId packetId) {
+        public static NetWriter CreatePacket(Packets packetId) {
             var p = _packets[(int)packetId];
             p.Clear(_packetClearStart);
             return p;
         }
-        public static void PutPlayerId(this NetWriter writer, int playerId) => writer.Put(0, Players.MaxPlayers - 1, playerId);
-        public static int ReadPlayerId(this NetReader reader) => reader.ReadInt(0, Players.MaxPlayers - 1);
-
         public static void PollEvents() {
             _manager.PollEvents();
             if ((_syncPlayersTimer += T.DeltaFull) >= SYNC_PLAYERS_TIME) {
                 _syncPlayersTimer -= SYNC_PLAYERS_TIME;
                 foreach (var p in _peers.Keys) {
-                    var w = CreatePacket(PacketId.PLAYER);
+                    var w = CreatePacket(Packets.PLAYER);
                     w.Put(0, PLAYER_SUB_IDS, 1);
                     for (var j = 0; j < Players.MaxPlayers; j++)
                         if (j != p && !Players.Flags[j].HasFlag(Players.FLAGS.IS_DEAD)) {
-                            PutPlayerId(w, j);
+                            PutPlayerID(w, j);
                             w.Put(Players.XY[j]);
                             if (Players.Input[j].HasFlag(Players.INPUT.MOV_UP)) {
                                 w.Put(true);
@@ -155,5 +154,16 @@ namespace BombermanOnline {
         public static void SendToAll(NetWriter writer, DeliveryMethod deliveryMethod) => _manager.SendToAll(writer.Data, 0, writer.LengthBytes, deliveryMethod);
         public static void SendToAll(NetWriter writer, DeliveryMethod deliveryMethod, NetPeer excludePeer) => _manager.SendToAll(writer.Data, 0, writer.LengthBytes, deliveryMethod, excludePeer);
         public static void Send(NetWriter writer, NetPeer peer, DeliveryMethod deliveryMethod) => peer.Send(writer.Data, 0, writer.LengthBytes, deliveryMethod);
+
+        public static void PutPlayerID(this NetWriter writer, int playerId) => writer.Put(0, Players.MaxPlayers - 1, playerId);
+        public static int ReadPlayerID(this NetReader reader) => reader.ReadInt(0, Players.MaxPlayers - 1);
+        public static void PutTileXY(this NetWriter w, int x, int y) {
+            w.Put(1, G.Tiles.GetLength(0) - 2, x);
+            w.Put(1, G.Tiles.GetLength(1) - 2, y);
+        }
+        public static void ReadTileXY(this NetReader r, out int x, out int y) {
+            x = r.ReadInt(1, G.Tiles.GetLength(0) - 2);
+            y = r.ReadInt(1, G.Tiles.GetLength(1) - 2);
+        }
     }
 }

@@ -5,11 +5,15 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace BombermanOnline {
     static class Bombs {
+        public const int MAX_POWER = 10;
+        public static readonly int FLAGS_COUNT = Enum.GetValues(typeof(FLAGS)).Length;
+
         public static Vector2[] XY { get; private set; }
         public static double[] TimeLeft { get; private set; }
         public static FLAGS[] Flags { get; private set; }
         public static float[] SpawnTime { get; private set; }
         public static byte[] Power { get; private set; }
+        public static byte[] Owner { get; private set; }
 
         [Flags]
         public enum FLAGS : byte { HAS_EXPLODED = 1, HAS_PIERCE = 2 }
@@ -28,6 +32,7 @@ namespace BombermanOnline {
             Flags = new FLAGS[capacity];
             SpawnTime = new float[capacity];
             Power = new byte[capacity];
+            Owner = new byte[capacity];
             _takenIDs.Clear();
             _freeIDs.Clear();
             for (int i = 0; i < capacity; i++)
@@ -51,20 +56,26 @@ namespace BombermanOnline {
             WallExplosion = new SpriteAnim(false, .75f, 0, s[20], s[21], s[22], s[23], s[24], s[25]);
         }
 
-        public static void Spawn(int x, int y, FLAGS flags) {
-            var j = _freeIDs.Last.Value;
+        public static int Spawn(int x, int y, FLAGS flags, int owner) {
+            var i = _freeIDs.Last.Value;
             _freeIDs.RemoveLast();
-            XY[j] = new Vector2(x << Tile.BITS_PER_SIZE, y << Tile.BITS_PER_SIZE);
-            TimeLeft[j] = 3.5;
-            Flags[j] = flags;
-            SpawnTime[j] = T.Total;
-            Power[j] = 1;
-            _takenIDs.Add(j);
+            XY[i] = new Vector2(x << Tile.BITS_PER_SIZE, y << Tile.BITS_PER_SIZE);
+            TimeLeft[i] = 3.5;
+            Flags[i] = flags;
+            SpawnTime[i] = T.Total;
+            Power[i] = 1;
+            Owner[i] = (byte)owner;
+            _takenIDs.Add(i);
+            return i;
         }
         public static void Despawn(int i) {
             if (!_takenIDs.Remove(i))
                 return;
             _freeIDs.AddLast(i);
+        }
+        public static void DespawnAll() {
+            foreach (var i in _takenIDs)
+                Despawn(i);
         }
         public static bool HasBomb(int x, int y, out int i) {
             foreach (var j in _takenIDs)
@@ -78,6 +89,38 @@ namespace BombermanOnline {
 
         public static void Update() {
             _explodedCells.Clear();
+            if (NetServer.IsRunning) {
+                var hasABombExploded = false;
+                foreach (var i in _takenIDs)
+                    if ((TimeLeft[i] -= T.DeltaFull) <= 0 && !Flags[i].HasFlag(FLAGS.HAS_EXPLODED)) {
+                        Explode(i);
+                        hasABombExploded = true;
+                    }
+                if (hasABombExploded) {
+                    var w = NetServer.CreatePacket(NetServer.Packets.SYNC_BOMBS);
+                    foreach (var i in _takenIDs) {
+                        int x = (int)XY[i].X >> Tile.BITS_PER_SIZE,
+                            y = (int)XY[i].Y >> Tile.BITS_PER_SIZE;
+                        w.PutTileXY(x, y);
+                        w.Put(0, FLAGS_COUNT, (int)Flags[i]);
+                        if (Flags[i].HasFlag(FLAGS.HAS_EXPLODED)) {
+                            w.Put(1, MAX_POWER, Power[i]);
+                            Despawn(i);
+                        }
+                        NetServer.SendToAll(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                    }
+                }
+            }
+        }
+        public static void Draw() {
+            foreach (var i in _takenIDs) {
+                var xy = new Vector2((int)XY[i].X + Tile.HALF_SIZE, (int)XY[i].Y + Tile.HALF_SIZE);
+                var s = G.Sprites[$"bomb"];
+                G.SB.Draw(s.Texture, xy, s.Source, Color.White, 0, s.Origin, .8f + (MathF.Sin((T.Total - SpawnTime[i] + 1) * 5) * .15f), 0, 0);
+            }
+        }
+
+        public static void Explode(int i) {
             static void SpawnExplosion(int x, int y, EXPLOSION_DIR dir) {
                 var xy = new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE);
                 SpriteAnim anim = ExplosionIntersection;
@@ -109,106 +152,90 @@ namespace BombermanOnline {
                 }
                 Animations.Spawn(xy, anim);
             }
-            static void Explode(int i) {
-                Flags[i] |= FLAGS.HAS_EXPLODED;
-                int x = (int)XY[i].X >> Tile.BITS_PER_SIZE,
-                    y = (int)XY[i].Y >> Tile.BITS_PER_SIZE;
-                bool continueUp = true,
-                    continueRight = true,
-                    continueDown = true,
-                    continueLeft = true;
-                if (!Flags[i].HasFlag(FLAGS.HAS_PIERCE))
-                    for (var j = 1; j <= Power[i]; j++) {
-                        if (continueUp) {
-                            var ry = y - j;
-                            if (HasBomb(x, ry, out var k)) {
-                                continueUp = false;
-                                if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
-                                    Explode(k);
-                                _explodedCells.Add(new Point(x, ry));
-                            } else if (!_explodedCells.Add(new Point(x, ry)))
-                                continueUp = false;
-                            else if (G.Tiles[x, ry].ID == Tile.IDS.wall) {
-                                G.Tiles[x, ry].ID = Tile.IDS.grass;
-                                Animations.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (ry << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
-                                continueUp = false;
-                            } else if (G.IsTileSolid(x, ry))
-                                continueUp = false;
-                            else
-                                SpawnExplosion(x, ry, j != Power[i] ? EXPLOSION_DIR.VERT : EXPLOSION_DIR.NORTH);
-                        }
-                        if (continueRight) {
-                            var rx = x + j;
-                            if (HasBomb(rx, y, out var k)) {
-                                continueRight = false;
-                                if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
-                                    Explode(k);
-                                _explodedCells.Add(new Point(rx, y));
-                            } else if (!_explodedCells.Add(new Point(rx, y)))
-                                continueRight = false;
-                            else if (G.Tiles[rx, y].ID == Tile.IDS.wall) {
-                                G.Tiles[rx, y].ID = Tile.IDS.grass;
-                                Animations.Spawn(new Vector2((rx << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
-                                continueRight = false;
-                            } else if (G.IsTileSolid(rx, y))
-                                continueRight = false;
-                            else
-                                SpawnExplosion(rx, y, j != Power[i] ? EXPLOSION_DIR.HORIZ : EXPLOSION_DIR.EAST);
-                        }
-                        if (continueDown) {
-                            var ry = y + j;
-                            if (HasBomb(x, ry, out var k)) {
-                                continueDown = false;
-                                if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
-                                    Explode(k);
-                                _explodedCells.Add(new Point(x, ry));
-                            } else if (!_explodedCells.Add(new Point(x, ry)))
-                                continueDown = false;
-                            else if (G.Tiles[x, ry].ID == Tile.IDS.wall) {
-                                G.Tiles[x, ry].ID = Tile.IDS.grass;
-                                Animations.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (ry << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
-                                continueDown = false;
-                            } else if (G.IsTileSolid(x, ry))
-                                continueDown = false;
-                            else
-                                SpawnExplosion(x, ry, j != Power[i] ? EXPLOSION_DIR.VERT : EXPLOSION_DIR.SOUTH);
-                        }
-                        if (continueLeft) {
-                            var rx = x - j;
-                            if (HasBomb(rx, y, out var k)) {
-                                continueLeft = false;
-                                if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
-                                    Explode(k);
-                                _explodedCells.Add(new Point(rx, y));
-                            } else if (!_explodedCells.Add(new Point(rx, y)))
-                                continueLeft = false;
-                            else if (G.Tiles[rx, y].ID == Tile.IDS.wall) {
-                                G.Tiles[rx, y].ID = Tile.IDS.grass;
-                                Animations.Spawn(new Vector2((rx << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
-                                continueLeft = false;
-                            } else if (G.IsTileSolid(rx, y))
-                                continueLeft = false;
-                            else
-                                SpawnExplosion(rx, y, j != Power[i] ? EXPLOSION_DIR.HORIZ : EXPLOSION_DIR.WEST);
-                        }
+            Flags[i] |= FLAGS.HAS_EXPLODED;
+            int x = (int)XY[i].X >> Tile.BITS_PER_SIZE,
+                y = (int)XY[i].Y >> Tile.BITS_PER_SIZE;
+            bool continueUp = true,
+                continueRight = true,
+                continueDown = true,
+                continueLeft = true;
+            if (!Flags[i].HasFlag(FLAGS.HAS_PIERCE))
+                for (var j = 1; j <= Power[i]; j++) {
+                    if (continueUp) {
+                        var ry = y - j;
+                        if (HasBomb(x, ry, out var k)) {
+                            continueUp = false;
+                            if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
+                                Explode(k);
+                            _explodedCells.Add(new Point(x, ry));
+                        } else if (!_explodedCells.Add(new Point(x, ry)))
+                            continueUp = false;
+                        else if (G.Tiles[x, ry].ID == Tile.IDS.wall) {
+                            G.Tiles[x, ry].ID = Tile.IDS.grass;
+                            Animations.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (ry << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
+                            continueUp = false;
+                        } else if (G.IsTileSolid(x, ry))
+                            continueUp = false;
+                        else
+                            SpawnExplosion(x, ry, j != Power[i] ? EXPLOSION_DIR.VERT : EXPLOSION_DIR.NORTH);
                     }
-                SpawnExplosion(x, y, EXPLOSION_DIR.INTERSECTION);
-                TimeLeft[i] = 0;
-            }
-            foreach (var i in _takenIDs) {
-                if ((TimeLeft[i] -= T.DeltaFull) <= 0) {
-                    if (!Flags[i].HasFlag(FLAGS.HAS_EXPLODED))
-                        Explode(i);
-                    Despawn(i);
+                    if (continueRight) {
+                        var rx = x + j;
+                        if (HasBomb(rx, y, out var k)) {
+                            continueRight = false;
+                            if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
+                                Explode(k);
+                            _explodedCells.Add(new Point(rx, y));
+                        } else if (!_explodedCells.Add(new Point(rx, y)))
+                            continueRight = false;
+                        else if (G.Tiles[rx, y].ID == Tile.IDS.wall) {
+                            G.Tiles[rx, y].ID = Tile.IDS.grass;
+                            Animations.Spawn(new Vector2((rx << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
+                            continueRight = false;
+                        } else if (G.IsTileSolid(rx, y))
+                            continueRight = false;
+                        else
+                            SpawnExplosion(rx, y, j != Power[i] ? EXPLOSION_DIR.HORIZ : EXPLOSION_DIR.EAST);
+                    }
+                    if (continueDown) {
+                        var ry = y + j;
+                        if (HasBomb(x, ry, out var k)) {
+                            continueDown = false;
+                            if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
+                                Explode(k);
+                            _explodedCells.Add(new Point(x, ry));
+                        } else if (!_explodedCells.Add(new Point(x, ry)))
+                            continueDown = false;
+                        else if (G.Tiles[x, ry].ID == Tile.IDS.wall) {
+                            G.Tiles[x, ry].ID = Tile.IDS.grass;
+                            Animations.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (ry << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
+                            continueDown = false;
+                        } else if (G.IsTileSolid(x, ry))
+                            continueDown = false;
+                        else
+                            SpawnExplosion(x, ry, j != Power[i] ? EXPLOSION_DIR.VERT : EXPLOSION_DIR.SOUTH);
+                    }
+                    if (continueLeft) {
+                        var rx = x - j;
+                        if (HasBomb(rx, y, out var k)) {
+                            continueLeft = false;
+                            if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
+                                Explode(k);
+                            _explodedCells.Add(new Point(rx, y));
+                        } else if (!_explodedCells.Add(new Point(rx, y)))
+                            continueLeft = false;
+                        else if (G.Tiles[rx, y].ID == Tile.IDS.wall) {
+                            G.Tiles[rx, y].ID = Tile.IDS.grass;
+                            Animations.Spawn(new Vector2((rx << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
+                            continueLeft = false;
+                        } else if (G.IsTileSolid(rx, y))
+                            continueLeft = false;
+                        else
+                            SpawnExplosion(rx, y, j != Power[i] ? EXPLOSION_DIR.HORIZ : EXPLOSION_DIR.WEST);
+                    }
                 }
-            }
-        }
-        public static void Draw() {
-            foreach (var i in _takenIDs) {
-                var xy = new Vector2((int)XY[i].X + Tile.HALF_SIZE, (int)XY[i].Y + Tile.HALF_SIZE);
-                var s = G.Sprites[$"bomb"];
-                G.SB.Draw(s.Texture, xy, s.Source, Color.White, 0, s.Origin, .8f + (MathF.Sin((T.Total - SpawnTime[i] + 1) * 5) * .15f), 0, 0);
-            }
+            SpawnExplosion(x, y, EXPLOSION_DIR.INTERSECTION);
+            TimeLeft[i] = 0;
         }
     }
 }

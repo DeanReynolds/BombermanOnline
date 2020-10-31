@@ -11,7 +11,7 @@ namespace BombermanOnline {
 
         public static bool IsRunning => _manager.IsRunning;
 
-        public enum PacketId { PLAYER, PLACE_BOMB, SET_POWER, CHAT }
+        public enum Packets { PLAYER, PLACE_BOMB, SET_POWER, CHAT }
 
         static int _initialDataState;
 
@@ -24,7 +24,7 @@ namespace BombermanOnline {
         static double _syncPlayersTimer;
 
         static NetClient() {
-            var packets = Enum.GetValues(typeof(PacketId));
+            var packets = Enum.GetValues(typeof(Packets));
             PACKET_MAX_ID = packets.Length - 1;
             foreach (var p in packets) {
                 var w = new NetWriter();
@@ -35,9 +35,9 @@ namespace BombermanOnline {
                 _r.ReadFrom(reader);
                 if (_initialDataState == 0) {
                     Players.Init(_r.ReadByte() + 1);
-                    Players.InsertLocal(_r.ReadPlayerId());
+                    Players.InsertLocal(_r.ReadPlayerID());
                     while (!_r.EndOfData) {
-                        int i = _r.ReadPlayerId();
+                        int i = _r.ReadPlayerID();
                         Players.Insert(i);
                         Players.Dir[i] = (Players.DIR)_r.ReadInt(0, 3);
                     }
@@ -45,38 +45,52 @@ namespace BombermanOnline {
                     G.SetScr<GameScr>();
                     _initialDataState++;
                 } else {
-                    var packetId = (NetServer.PacketId)_r.ReadInt(0, NetServer.PACKET_MAX_ID);
-                    switch (packetId) {
-                        case NetServer.PacketId.PLAYER:
-                            var i = _r.ReadInt(0, NetServer.PLAYER_SUB_IDS);
-                            switch (i) {
-                                case 0:
-                                    var p = NetServer.ReadPlayerId(_r);
+                    var p = (NetServer.Packets)_r.ReadInt(0, NetServer.PACKET_MAX_ID);
+                    if (p == NetServer.Packets.PLAYER) {
+                        var i = _r.ReadInt(0, NetServer.PLAYER_SUB_IDS);
+                        switch (i) {
+                            case 0:
+                                var k = NetServer.ReadPlayerID(_r);
+                                if (_r.ReadBool())
+                                    Players.Insert(k);
+                                else
+                                    Players.Remove(k);
+                                break;
+                            case 1:
+                                while (!_r.EndOfData) {
+                                    var j = _r.ReadPlayerID();
+                                    Players.XY[j] = _r.ReadVector2();
+                                    Players.Input[j] = 0;
                                     if (_r.ReadBool())
-                                        Players.Insert(p);
-                                    else
-                                        Players.Remove(p);
-                                    break;
-                                case 1:
-                                    while (!_r.EndOfData) {
-                                        var j = _r.ReadPlayerId();
-                                        Players.XY[j] = _r.ReadVector2();
-                                        Players.Input[j] = 0;
-                                        if (_r.ReadBool())
-                                            if (_r.ReadInt(0, 1) == 0)
-                                                Players.Input[j] |= Players.INPUT.MOV_UP;
-                                            else
-                                                Players.Input[j] |= Players.INPUT.MOV_DOWN;
-                                        if (_r.ReadBool())
-                                            if (_r.ReadInt(0, 1) == 0)
-                                                Players.Input[j] |= Players.INPUT.MOV_LEFT;
-                                            else
-                                                Players.Input[j] |= Players.INPUT.MOV_RIGHT;
-                                        Players.Dir[j] = (Players.DIR)_r.ReadInt(0, 3);
-                                    }
-                                    break;
+                                        if (_r.ReadInt(0, 1) == 0)
+                                            Players.Input[j] |= Players.INPUT.MOV_UP;
+                                        else
+                                            Players.Input[j] |= Players.INPUT.MOV_DOWN;
+                                    if (_r.ReadBool())
+                                        if (_r.ReadInt(0, 1) == 0)
+                                            Players.Input[j] |= Players.INPUT.MOV_LEFT;
+                                        else
+                                            Players.Input[j] |= Players.INPUT.MOV_RIGHT;
+                                    Players.Dir[j] = (Players.DIR)_r.ReadInt(0, 3);
+                                }
+                                break;
+                        }
+                    } else if (p == NetServer.Packets.PLACE_BOMB) {
+                        _r.ReadTileXY(out var x, out var y);
+                        var flags = (Bombs.FLAGS)_r.ReadInt(0, Bombs.FLAGS_COUNT);
+                        Bombs.Spawn(x, y, flags, _r.ReadPlayerID());
+                    } else if (p == NetServer.Packets.SYNC_BOMBS) {
+                        Bombs.DespawnAll();
+                        while (!_r.EndOfData) {
+                            _r.ReadTileXY(out var x, out var y);
+                            var flags = (Bombs.FLAGS)_r.ReadInt(0, Bombs.FLAGS_COUNT);
+                            var j = Bombs.Spawn(x, y, flags, 0);
+                            if (flags.HasFlag(Bombs.FLAGS.HAS_EXPLODED)) {
+                                Bombs.Power[j] = (byte)_r.ReadInt(1, Bombs.MAX_POWER);
+                                Bombs.Explode(j);
+                                Bombs.Despawn(j);
                             }
-                            break;
+                        }
                     }
                 }
             };
@@ -95,17 +109,16 @@ namespace BombermanOnline {
         }
         public static void Stop() => _manager.Stop(true);
 
-        public static NetWriter CreatePacket(PacketId packetId) {
+        public static NetWriter CreatePacket(Packets packetId) {
             var p = _packets[(int)packetId];
             p.Clear(_packetClearStartBits);
             return p;
         }
-
         public static void PollEvents() {
             _manager.PollEvents();
             if (_initialDataState != 0 && (_syncPlayersTimer += T.DeltaFull) >= SYNC_PLAYERS_TIME) {
                 _syncPlayersTimer -= SYNC_PLAYERS_TIME;
-                var w = CreatePacket(PacketId.PLAYER);
+                var w = CreatePacket(Packets.PLAYER);
                 var j = Players.LocalID;
                 w.Put(Players.XY[j]);
                 if (Players.Input[j].HasFlag(Players.INPUT.MOV_UP)) {

@@ -62,7 +62,6 @@ namespace BombermanOnline {
                 for (var x = 2; x < width - 2; x += 2)
                     Tiles[x, y].ID = Tile.IDS.bound0;
         }
-
         public static bool IsTileSolid(int x, int y) {
             switch (Tiles[x, y].ID) {
                 case Tile.IDS.wall:
