@@ -7,7 +7,9 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/Platforms/Core/Core.csproj"
+                "${workspaceFolder}/Platforms/Core/Core.csproj",
+                // "-c",
+                // "Release"
             ],
             "problemMatcher": "$tsc"
         },

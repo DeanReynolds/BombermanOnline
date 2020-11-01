@@ -307,8 +307,6 @@
             <key type="filename">sprites/p00.png</key>
             <key type="filename">sprites/p01.png</key>
             <key type="filename">sprites/p02.png</key>
-            <key type="filename">sprites/p11.png</key>
-            <key type="filename">sprites/p12.png</key>
             <key type="filename">sprites/p20.png</key>
             <key type="filename">sprites/p21.png</key>
             <key type="filename">sprites/p22.png</key>
@@ -327,6 +325,8 @@
                 <false/>
             </struct>
             <key type="filename">sprites/p10.png</key>
+            <key type="filename">sprites/p11.png</key>
+            <key type="filename">sprites/p12.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.479167,0.85</point_f>

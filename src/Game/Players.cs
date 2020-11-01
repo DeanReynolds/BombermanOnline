@@ -7,8 +7,8 @@ using Microsoft.Xna.Framework.Input;
 
 namespace BombermanOnline {
     static class Players {
-        public const int HITBOX_WIDTH = 16,
-            HITBOX_HEIGHT = 10;
+        public const int HITBOX_WIDTH = 14,
+            HITBOX_HEIGHT = 11;
 
         public static int MaxPlayers { get; private set; }
         public static int LocalID { get; private set; } = -1;
@@ -20,7 +20,7 @@ namespace BombermanOnline {
 
         public static readonly HashSet<int> AlivePlayers = new HashSet<int>();
 
-        public enum DIR { NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3 }
+        public enum DIR : byte { NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3 }
 
         [Flags]
         public enum INPUT : byte { MOV_UP = 1, MOV_DOWN = 2, MOV_RIGHT = 4, MOV_LEFT = 8 }
@@ -84,7 +84,7 @@ namespace BombermanOnline {
                         Input[LocalID] |= INPUT.MOV_LEFT;
                 } else if (KeyboardCondition.Held(Keys.D))
                     Input[LocalID] |= INPUT.MOV_RIGHT;
-                if (KeyboardCondition.Held(Keys.Space)) {
+                if (KeyboardCondition.Held(Keys.Space) || KeyboardCondition.Held(Keys.Enter)) {
                     int x = (int)XY[LocalID].X >> Tile.BITS_PER_SIZE,
                         y = (int)XY[LocalID].Y >> Tile.BITS_PER_SIZE;
                     if (!Bombs.HasBomb(x, y, out _)) {
@@ -111,7 +111,7 @@ namespace BombermanOnline {
                 ptx = ((int)XY[i].X) >> Tile.BITS_PER_SIZE;
                 pty = ((int)XY[i].Y) >> Tile.BITS_PER_SIZE;
                 dir = 0;
-                oldXY = XY[i].X;
+                oldXY = (int)XY[i].X;
                 if (Input[i].HasFlag(INPUT.MOV_LEFT)) {
                     XY[i].X -= moveSpd;
                     dir = -1;
@@ -141,11 +141,11 @@ namespace BombermanOnline {
                     }
                     if (di)
                         XY[i].X = (nt << Tile.BITS_PER_SIZE) + (dir < 0 ? Tile.SIZE : 0) - (dir * (hb.Width / 2f));
-                    if (XY[i].X != oldXY)
+                    if ((int)XY[i].X != oldXY)
                         Dir[i] = dir == 1 ? DIR.EAST : DIR.WEST;
                 }
                 dir = 0;
-                oldXY = XY[i].Y;
+                oldXY = (int)XY[i].Y;
                 if (Input[i].HasFlag(INPUT.MOV_UP)) {
                     XY[i].Y -= moveSpd;
                     dir = -1;
@@ -175,22 +175,31 @@ namespace BombermanOnline {
                     }
                     if (di)
                         XY[i].Y = (nt << Tile.BITS_PER_SIZE) + (dir < 0 ? Tile.SIZE : 0) - (dir * (hb.Height / 2f));
-                    if (XY[i].Y != oldXY)
+                    if ((int)XY[i].Y != oldXY)
                         Dir[i] = dir == 1 ? DIR.SOUTH : DIR.NORTH;
                 }
             }
         }
         public static void Draw() {
             foreach (var i in _takenIDs) {
-                var hb = new Rectangle((int)(XY[i].X - (HITBOX_WIDTH >> 1)), (int)(XY[i].Y - (HITBOX_HEIGHT >> 1)), HITBOX_WIDTH, HITBOX_HEIGHT);
-                G.SB.FillRectangle(hb, Color.Blue);
-                var dir = (int)Dir[i];
-                SpriteEffects effect = 0;
+                // var hb = new Rectangle((int)(XY[i].X - (HITBOX_WIDTH >> 1)), (int)(XY[i].Y - (HITBOX_HEIGHT >> 1)), HITBOX_WIDTH, HITBOX_HEIGHT);
+                // G.SB.FillRectangle(hb, Color.Blue);
                 var xy = XY[i].ToPoint().ToVector2();
-                if (dir == 3) {
-                    dir = 1;
-                    effect = SpriteEffects.FlipHorizontally;
-                    xy.X += 2;
+                byte dir;
+                SpriteEffects effect = 0;
+                switch (Dir[i]) {
+                    case DIR.EAST:
+                        xy.X -= 1;
+                        dir = 1;
+                        break;
+                    case DIR.WEST:
+                        xy.X += 3;
+                        dir = 1;
+                        effect = SpriteEffects.FlipHorizontally;
+                        break;
+                    default:
+                        dir = (byte)Dir[i];
+                        break;
                 }
                 var s = G.Sprites[$"p{dir}0"];
                 G.SB.Draw(s.Texture, xy, s.Source, Color.White, 0, s.Origin, 1, effect, 0);

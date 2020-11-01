@@ -3,7 +3,12 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace BombermanOnline {
     struct SpriteAnim {
-        public int Frame => Finished?MaxFrames - 1: (int)Math.Floor(_frame);
+        public int Frame {
+            get {
+                int v = (int)Math.Floor(_frame);
+                return v >= Frames.Length ? MaxFrames - 1 : v;
+            }
+        }
         public bool Finished => (int)Math.Floor(_frame) >= MaxFrames;
         public int MaxFrames => Frames.Length;
 

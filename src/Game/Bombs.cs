@@ -8,6 +8,7 @@ namespace BombermanOnline {
         public const int MAX_POWER = 10;
         public static readonly int FLAGS_COUNT = Enum.GetValues(typeof(FLAGS)).Length;
 
+        public static int Count { get; private set; }
         public static Vector2[] XY { get; private set; }
         public static double[] TimeLeft { get; private set; }
         public static FLAGS[] Flags { get; private set; }
@@ -22,8 +23,6 @@ namespace BombermanOnline {
 
         static SpriteAnim ExplosionIntersection, ExplosionNorth, ExplosionEast, ExplosionVert, ExplosionHoriz, ExplosionWest, ExplosionSouth, WallExplosion;
 
-        static readonly LinkedList<int> _freeIDs = new LinkedList<int>();
-        static readonly SafeHashSet<int> _takenIDs = new SafeHashSet<int>();
         static readonly HashSet<Point> _explodedCells = new HashSet<Point>();
 
         public static void Init(int capacity) {
@@ -33,10 +32,6 @@ namespace BombermanOnline {
             SpawnTime = new float[capacity];
             Power = new byte[capacity];
             Owner = new byte[capacity];
-            _takenIDs.Clear();
-            _freeIDs.Clear();
-            for (int i = 0; i < capacity; i++)
-                _freeIDs.AddLast(i);
             const float explosionSpeed = 1;
             var s = new [] {
                 G.Sprites["explode00"], G.Sprites["explode01"], G.Sprites["explode02"], G.Sprites["explode03"],
@@ -57,28 +52,35 @@ namespace BombermanOnline {
         }
 
         public static int Spawn(int x, int y, FLAGS flags, int owner) {
-            var i = _freeIDs.Last.Value;
-            _freeIDs.RemoveLast();
+            var i = Count++;
             XY[i] = new Vector2(x << Tile.BITS_PER_SIZE, y << Tile.BITS_PER_SIZE);
             TimeLeft[i] = 3.5;
             Flags[i] = flags;
             SpawnTime[i] = T.Total;
             Power[i] = 1;
             Owner[i] = (byte)owner;
-            _takenIDs.Add(i);
             return i;
         }
-        public static void Despawn(int i) {
-            if (!_takenIDs.Remove(i))
-                return;
-            _freeIDs.AddLast(i);
+        public static bool Despawn(int i) {
+#if DEBUG
+            if (Count <= i)
+                return false;
+#endif
+            --Count;
+            XY[i] = XY[Count];
+            TimeLeft[i] = TimeLeft[Count];
+            Flags[i] = Flags[Count];
+            SpawnTime[i] = SpawnTime[Count];
+            Power[i] = Power[Count];
+            Owner[i] = Owner[Count];
+            return true;
         }
         public static void DespawnAll() {
-            foreach (var i in _takenIDs)
+            for (var i = 0; i < Count; i++)
                 Despawn(i);
         }
         public static bool HasBomb(int x, int y, out int i) {
-            foreach (var j in _takenIDs)
+            for (var j = 0; j < Count; j++)
                 if ((int)XY[j].X >> Tile.BITS_PER_SIZE == x && (int)XY[j].Y >> Tile.BITS_PER_SIZE == y) {
                     i = j;
                     return true;
@@ -91,21 +93,21 @@ namespace BombermanOnline {
             _explodedCells.Clear();
             if (NetServer.IsRunning) {
                 var hasABombExploded = false;
-                foreach (var i in _takenIDs)
+                for (var i = 0; i < Count; i++)
                     if ((TimeLeft[i] -= T.DeltaFull) <= 0 && !Flags[i].HasFlag(FLAGS.HAS_EXPLODED)) {
                         Explode(i);
                         hasABombExploded = true;
                     }
                 if (hasABombExploded) {
                     var w = NetServer.CreatePacket(NetServer.Packets.SYNC_BOMBS);
-                    foreach (var i in _takenIDs) {
+                    for (var i = 0; i < Count; i++) {
                         int x = (int)XY[i].X >> Tile.BITS_PER_SIZE,
                             y = (int)XY[i].Y >> Tile.BITS_PER_SIZE;
                         w.PutTileXY(x, y);
                         w.Put(0, FLAGS_COUNT, (int)Flags[i]);
                         if (Flags[i].HasFlag(FLAGS.HAS_EXPLODED)) {
                             w.Put(1, MAX_POWER, Power[i]);
-                            Despawn(i);
+                            Despawn(i--);
                         }
                         NetServer.SendToAll(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
                     }
@@ -113,7 +115,7 @@ namespace BombermanOnline {
             }
         }
         public static void Draw() {
-            foreach (var i in _takenIDs) {
+            for (var i = 0; i < Count; i++) {
                 var xy = new Vector2((int)XY[i].X + Tile.HALF_SIZE, (int)XY[i].Y + Tile.HALF_SIZE);
                 var s = G.Sprites[$"bomb"];
                 G.SB.Draw(s.Texture, xy, s.Source, Color.White, 0, s.Origin, .8f + (MathF.Sin((T.Total - SpawnTime[i] + 1) * 5) * .15f), 0, 0);
