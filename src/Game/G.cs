@@ -79,7 +79,8 @@ namespace BombermanOnline {
                 PreferredBackBufferHeight = 720,
                 IsFullScreen = false,
                 HardwareModeSwitch = false,
-                SynchronizeWithVerticalRetrace = false
+                SynchronizeWithVerticalRetrace = false,
+                GraphicsProfile = GraphicsProfile.HiDef
             };
             Content = base.Content;
             Content.RootDirectory = "Content";
@@ -115,6 +116,7 @@ namespace BombermanOnline {
             OnScreenSizeChange(null, null);
             Bombs.Init(100);
             Animations.Init(375);
+            Powers.Init(200);
         }
 
         protected override void LoadContent() {

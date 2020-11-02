@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace BombermanOnline {
     static class Bombs {
-        public const int MAX_POWER = 10;
         public static readonly int FLAGS_COUNT = Enum.GetValues(typeof(FLAGS)).Length;
 
         public static int Count { get; private set; }
@@ -22,8 +20,6 @@ namespace BombermanOnline {
         enum EXPLOSION_DIR : byte { INTERSECTION = 0, NORTH = 1, EAST = 2, VERT = 3, HORIZ = 4, WEST = 5, SOUTH = 6 }
 
         static SpriteAnim ExplosionIntersection, ExplosionNorth, ExplosionEast, ExplosionVert, ExplosionHoriz, ExplosionWest, ExplosionSouth, WallExplosion;
-
-        static readonly HashSet<Point> _explodedCells = new HashSet<Point>();
 
         public static void Init(int capacity) {
             XY = new Vector2[capacity];
@@ -57,7 +53,7 @@ namespace BombermanOnline {
             TimeLeft[i] = 3.5;
             Flags[i] = flags;
             SpawnTime[i] = T.Total;
-            Power[i] = 1;
+            Power[i] = Players.Power[owner].Fire;
             Owner[i] = (byte)owner;
             return i;
         }
@@ -90,7 +86,6 @@ namespace BombermanOnline {
         }
 
         public static void Update() {
-            _explodedCells.Clear();
             if (NetServer.IsRunning) {
                 var hasABombExploded = false;
                 for (var i = 0; i < Count; i++)
@@ -106,7 +101,7 @@ namespace BombermanOnline {
                         w.PutTileXY(x, y);
                         w.Put(0, FLAGS_COUNT, (int)Flags[i]);
                         if (Flags[i].HasFlag(FLAGS.HAS_EXPLODED)) {
-                            w.Put(1, MAX_POWER, Power[i]);
+                            w.Put(1, PlayerPowers.MAX_FIRE, Power[i]);
                             Despawn(i--);
                         }
                         NetServer.SendToAll(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
@@ -118,7 +113,7 @@ namespace BombermanOnline {
             for (var i = 0; i < Count; i++) {
                 var xy = new Vector2((int)XY[i].X + Tile.HALF_SIZE, (int)XY[i].Y + Tile.HALF_SIZE);
                 var s = G.Sprites[$"bomb"];
-                G.SB.Draw(s.Texture, xy, s.Source, Color.White, 0, s.Origin, .8f + (MathF.Sin((T.Total - SpawnTime[i] + 1) * 5) * .15f), 0, 0);
+                G.SB.Draw(G.Sprites.Texture, xy, s.Source, Color.White, 0, s.Origin, .8f + (MathF.Sin((T.Total - SpawnTime[i] + 1) * 5) * .15f), 0, 0);
             }
         }
 
@@ -138,12 +133,10 @@ namespace BombermanOnline {
                     case EXPLOSION_DIR.SOUTH:
                         anim = ExplosionSouth;
                         xy.Y += Tile.HALF_SIZE - 3;
-                        dir = EXPLOSION_DIR.NORTH;
                         break;
                     case EXPLOSION_DIR.WEST:
                         anim = ExplosionWest;
                         xy.X -= Tile.HALF_SIZE - 3;
-                        dir = EXPLOSION_DIR.EAST;
                         break;
                     case EXPLOSION_DIR.HORIZ:
                         anim = ExplosionHoriz;
@@ -153,6 +146,10 @@ namespace BombermanOnline {
                         break;
                 }
                 Animations.Spawn(xy, anim);
+            }
+            static void SpawnPower(int x, int y) {
+                var xy = new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE);
+                Powers.Spawn(xy, Powers.IDS.FIRE_UP);
             }
             Flags[i] |= FLAGS.HAS_EXPLODED;
             int x = (int)XY[i].X >> Tile.BITS_PER_SIZE,
@@ -169,12 +166,10 @@ namespace BombermanOnline {
                             continueUp = false;
                             if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
                                 Explode(k);
-                            _explodedCells.Add(new Point(x, ry));
-                        } else if (!_explodedCells.Add(new Point(x, ry)))
-                            continueUp = false;
-                        else if (G.Tiles[x, ry].ID == Tile.IDS.wall) {
+                        } else if (G.Tiles[x, ry].ID == Tile.IDS.wall) {
                             G.Tiles[x, ry].ID = Tile.IDS.grass;
                             Animations.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (ry << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
+                            SpawnPower(x, ry);
                             continueUp = false;
                         } else if (G.IsTileSolid(x, ry))
                             continueUp = false;
@@ -187,12 +182,10 @@ namespace BombermanOnline {
                             continueRight = false;
                             if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
                                 Explode(k);
-                            _explodedCells.Add(new Point(rx, y));
-                        } else if (!_explodedCells.Add(new Point(rx, y)))
-                            continueRight = false;
-                        else if (G.Tiles[rx, y].ID == Tile.IDS.wall) {
+                        } else if (G.Tiles[rx, y].ID == Tile.IDS.wall) {
                             G.Tiles[rx, y].ID = Tile.IDS.grass;
                             Animations.Spawn(new Vector2((rx << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
+                            SpawnPower(rx, y);
                             continueRight = false;
                         } else if (G.IsTileSolid(rx, y))
                             continueRight = false;
@@ -205,12 +198,10 @@ namespace BombermanOnline {
                             continueDown = false;
                             if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
                                 Explode(k);
-                            _explodedCells.Add(new Point(x, ry));
-                        } else if (!_explodedCells.Add(new Point(x, ry)))
-                            continueDown = false;
-                        else if (G.Tiles[x, ry].ID == Tile.IDS.wall) {
+                        } else if (G.Tiles[x, ry].ID == Tile.IDS.wall) {
                             G.Tiles[x, ry].ID = Tile.IDS.grass;
                             Animations.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (ry << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
+                            SpawnPower(x, ry);
                             continueDown = false;
                         } else if (G.IsTileSolid(x, ry))
                             continueDown = false;
@@ -223,12 +214,10 @@ namespace BombermanOnline {
                             continueLeft = false;
                             if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
                                 Explode(k);
-                            _explodedCells.Add(new Point(rx, y));
-                        } else if (!_explodedCells.Add(new Point(rx, y)))
-                            continueLeft = false;
-                        else if (G.Tiles[rx, y].ID == Tile.IDS.wall) {
+                        } else if (G.Tiles[rx, y].ID == Tile.IDS.wall) {
                             G.Tiles[rx, y].ID = Tile.IDS.grass;
                             Animations.Spawn(new Vector2((rx << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
+                            SpawnPower(rx, y);
                             continueLeft = false;
                         } else if (G.IsTileSolid(rx, y))
                             continueLeft = false;

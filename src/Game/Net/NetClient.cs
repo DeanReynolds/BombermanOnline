@@ -11,7 +11,7 @@ namespace BombermanOnline {
 
         public static bool IsRunning => _manager.IsRunning;
 
-        public enum Packets { PLAYER, PLACE_BOMB, SET_POWER, CHAT }
+        public enum Packets { PLAYER, PLACE_BOMB, COLLECT_POWER, CHAT }
 
         static int _initialDataState;
 
@@ -76,9 +76,10 @@ namespace BombermanOnline {
                                 break;
                         }
                     } else if (p == NetServer.Packets.PLACE_BOMB) {
+                        var j = _r.ReadPlayerID();
                         _r.ReadTileXY(out var x, out var y);
                         var flags = (Bombs.FLAGS)_r.ReadInt(0, Bombs.FLAGS_COUNT);
-                        Bombs.Spawn(x, y, flags, _r.ReadPlayerID());
+                        Bombs.Spawn(x, y, flags, j);
                     } else if (p == NetServer.Packets.SYNC_BOMBS) {
                         Bombs.DespawnAll();
                         while (!_r.EndOfData) {
@@ -86,11 +87,18 @@ namespace BombermanOnline {
                             var flags = (Bombs.FLAGS)_r.ReadInt(0, Bombs.FLAGS_COUNT);
                             var j = Bombs.Spawn(x, y, flags, 0);
                             if (flags.HasFlag(Bombs.FLAGS.HAS_EXPLODED)) {
-                                Bombs.Power[j] = (byte)_r.ReadInt(1, Bombs.MAX_POWER);
+                                Bombs.Power[j] = (byte)_r.ReadInt(1, PlayerPowers.MAX_FIRE);
                                 Bombs.Explode(j);
                                 Bombs.Despawn(j);
                             }
                         }
+                    } else if (p == NetServer.Packets.COLLECT_POWER) {
+                        var j = _r.ReadPlayerID();
+                        _r.ReadTileXY(out var x, out var y);
+                        var id = _r.ReadPowerID();
+                        if (Powers.HasPower(x, y, out var pi) && Powers.ID[pi] == id)
+                            Powers.Despawn(pi);
+                        Players.AddPower(id, j);
                     }
                 }
             };

@@ -22,6 +22,7 @@ namespace BombermanOnline {
 
         public override void Update() {
             Players.Update();
+            Powers.Update();
             Animations.Update();
             Bombs.Update();
         }
@@ -40,10 +41,11 @@ namespace BombermanOnline {
             for (var y = 0; y < G.Tiles.GetLength(1); y++)
                 for (var x = 0; x < G.Tiles.GetLength(0); x++) {
                     var sprite = G.Sprites[G.Tiles[x, y].ID.ToString()];
-                    G.SB.Draw(sprite.Texture, new Rectangle(x << Tile.BITS_PER_SIZE, y << Tile.BITS_PER_SIZE, Tile.SIZE, Tile.SIZE), sprite.Source, Color.White, 0, Vector2.Zero, 0, 0);
+                    G.SB.Draw(G.Sprites.Texture, new Rectangle(x << Tile.BITS_PER_SIZE, y << Tile.BITS_PER_SIZE, Tile.SIZE, Tile.SIZE), sprite.Source, Color.White, 0, Vector2.Zero, 0, 0);
                 }
             G.SB.End();
-            G.SB.Begin(samplerState: SamplerState.AnisotropicClamp);
+            G.SB.Begin(samplerState: SamplerState.PointClamp);
+            Powers.Draw();
             Bombs.Draw();
             Animations.Draw();
             Players.Draw();

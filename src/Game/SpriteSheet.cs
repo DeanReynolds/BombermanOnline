@@ -22,8 +22,7 @@ namespace BombermanOnline {
                 var origin = new Vector2(float.Parse(s[8]) * source.Width, float.Parse(s[9]) * source.Height);
                 sprites.Add(name,
                     new Sprite {
-                        Texture = texture,
-                            Source = source,
+                        Source = source,
                             // IsRotated = isRotated,
                             Origin = origin
                     });

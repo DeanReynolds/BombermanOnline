@@ -186,21 +186,16 @@
         </struct>
         <key>individualSpriteSettings</key>
         <map type="IndividualSpriteSettingsMap">
-            <key type="filename">sprites/+bombdown.png</key>
-            <key type="filename">sprites/+bombup.png</key>
-            <key type="filename">sprites/+fire.png</key>
-            <key type="filename">sprites/+firedown.png</key>
-            <key type="filename">sprites/+fullfire.png</key>
+            <key type="filename">sprites/+bomb_down.png</key>
+            <key type="filename">sprites/+bomb_kick.png</key>
+            <key type="filename">sprites/+bomb_pierce.png</key>
+            <key type="filename">sprites/+bomb_up.png</key>
+            <key type="filename">sprites/+fire_down.png</key>
+            <key type="filename">sprites/+fire_up.png</key>
+            <key type="filename">sprites/+full_fire.png</key>
             <key type="filename">sprites/+geta.png</key>
-            <key type="filename">sprites/+kick.png</key>
-            <key type="filename">sprites/+marblebomb.png</key>
-            <key type="filename">sprites/+piercebomb.png</key>
-            <key type="filename">sprites/+powerbomb.png</key>
-            <key type="filename">sprites/+powerglove.png</key>
-            <key type="filename">sprites/+redbomb.png</key>
+            <key type="filename">sprites/+power_bomb.png</key>
             <key type="filename">sprites/+skate.png</key>
-            <key type="filename">sprites/+skull.png</key>
-            <key type="filename">sprites/+vest.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -212,21 +207,6 @@
                 <rect>8,8,16,16</rect>
                 <key>scale9Paddings</key>
                 <rect>8,8,16,16</rect>
-                <key>scale9FromFile</key>
-                <false/>
-            </struct>
-            <key type="filename">sprites/+louie.png</key>
-            <struct type="IndividualSpriteSettings">
-                <key>pivotPoint</key>
-                <point_f>0.5,0.5</point_f>
-                <key>spriteScale</key>
-                <double>1</double>
-                <key>scale9Enabled</key>
-                <false/>
-                <key>scale9Borders</key>
-                <rect>6,6,12,12</rect>
-                <key>scale9Paddings</key>
-                <rect>6,6,12,12</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
@@ -423,22 +403,16 @@
             <filename>sprites/wallblown3.png</filename>
             <filename>sprites/wallblown4.png</filename>
             <filename>sprites/wallblown5.png</filename>
-            <filename>sprites/+bombdown.png</filename>
-            <filename>sprites/+bombup.png</filename>
-            <filename>sprites/+fire.png</filename>
-            <filename>sprites/+firedown.png</filename>
-            <filename>sprites/+fullfire.png</filename>
+            <filename>sprites/+bomb_down.png</filename>
+            <filename>sprites/+bomb_kick.png</filename>
+            <filename>sprites/+bomb_pierce.png</filename>
+            <filename>sprites/+bomb_up.png</filename>
+            <filename>sprites/+fire_down.png</filename>
+            <filename>sprites/+fire_up.png</filename>
+            <filename>sprites/+full_fire.png</filename>
             <filename>sprites/+geta.png</filename>
-            <filename>sprites/+kick.png</filename>
-            <filename>sprites/+louie.png</filename>
-            <filename>sprites/+marblebomb.png</filename>
-            <filename>sprites/+piercebomb.png</filename>
-            <filename>sprites/+powerbomb.png</filename>
-            <filename>sprites/+powerglove.png</filename>
-            <filename>sprites/+redbomb.png</filename>
             <filename>sprites/+skate.png</filename>
-            <filename>sprites/+skull.png</filename>
-            <filename>sprites/+vest.png</filename>
+            <filename>sprites/+power_bomb.png</filename>
         </array>
         <key>ignoreFileList</key>
         <array/>
