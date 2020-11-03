@@ -17,7 +17,7 @@ namespace BombermanOnline {
         public static DIR[] Dir { get; private set; }
         public static SpriteAnim[] Anim { get; private set; }
         public static FLAGS[] Flags { get; private set; }
-        public static PlayerPowers[] Power { get; private set; }
+        public static Stats[] Stats { get; private set; }
 
         public static readonly HashSet<int> AlivePlayers = new HashSet<int>();
 
@@ -39,7 +39,7 @@ namespace BombermanOnline {
             Dir = new DIR[capacity];
             Anim = new SpriteAnim[capacity];
             Flags = new FLAGS[capacity];
-            Power = new PlayerPowers[capacity];
+            Stats = new Stats[capacity];
             _takenIDs.Clear();
             _freeIDs.Clear();
             for (int i = 0; i < capacity; i++)
@@ -87,7 +87,7 @@ namespace BombermanOnline {
                         Input[LocalID] |= INPUT.MOV_LEFT;
                 } else if (KeyboardCondition.Held(Keys.D))
                     Input[LocalID] |= INPUT.MOV_RIGHT;
-                if (KeyboardCondition.Held(Keys.Space) || KeyboardCondition.Held(Keys.Enter)) {
+                if ((KeyboardCondition.Held(Keys.Space) || KeyboardCondition.Held(Keys.Enter)) && Stats[LocalID].BombsPlaced < Stats[LocalID].MaxBombs) {
                     int x = (int)XY[LocalID].X >> Tile.BITS_PER_SIZE,
                         y = (int)XY[LocalID].Y >> Tile.BITS_PER_SIZE;
                     if (!Bombs.HasBomb(x, y, out _)) {
@@ -131,7 +131,7 @@ namespace BombermanOnline {
             }
             int ptx, pty, dir;
             foreach (var i in _takenIDs) {
-                float moveSpd = (8 * Power[i].Speed) + 50 * T.Delta, oldXY;
+                float moveSpd = (8 * Stats[i].Speed) + 50 * T.Delta, oldXY;
                 ptx = ((int)XY[i].X) >> Tile.BITS_PER_SIZE;
                 pty = ((int)XY[i].Y) >> Tile.BITS_PER_SIZE;
                 dir = 0;
@@ -246,37 +246,37 @@ namespace BombermanOnline {
 
         public static void Reset(int i) {
             Flags[i] = 0;
-            Power[i] = new PlayerPowers {
+            Stats[i] = new Stats {
                 Fire = 1,
-                Bombs = 1,
+                MaxBombs = 1,
                 Speed = 0
             };
         }
         public static void AddPower(Powers.IDS id, int player) {
             switch (id) {
                 case Powers.IDS.FIRE_UP:
-                    Power[player].Fire = (byte)Math.Min(Power[player].Fire + 1, PlayerPowers.MAX_FIRE);
+                    Stats[player].Fire = (byte)Math.Min(Stats[player].Fire + 1, BombermanOnline.Stats.MAX_FIRE);
                     break;
                 case Powers.IDS.FIRE_DOWN:
-                    Power[player].Fire = (byte)Math.Max(Power[player].Fire - 1, 1);
+                    Stats[player].Fire = (byte)Math.Max(Stats[player].Fire - 1, 1);
                     break;
                 case Powers.IDS.FULL_FIRE:
-                    Power[player].Fire = PlayerPowers.MAX_FIRE;
+                    Stats[player].Fire = BombermanOnline.Stats.MAX_FIRE;
                     break;
                 case Powers.IDS.BOMB_UP:
-                    Power[player].Bombs = (byte)Math.Min(Power[player].Bombs + 1, PlayerPowers.MAX_BOMBS);
+                    Stats[player].MaxBombs = (byte)Math.Min(Stats[player].MaxBombs + 1, BombermanOnline.Stats.MAX_BOMBS);
                     break;
                 case Powers.IDS.BOMB_DOWN:
-                    Power[player].Bombs = (byte)Math.Max(Power[player].Bombs - 1, 1);
+                    Stats[player].MaxBombs = (byte)Math.Max(Stats[player].MaxBombs - 1, 1);
                     break;
                 case Powers.IDS.POWER_BOMB:
-                    Power[player].Bombs = PlayerPowers.MAX_BOMBS;
+                    Stats[player].MaxBombs = BombermanOnline.Stats.MAX_BOMBS;
                     break;
                 case Powers.IDS.SKATE:
-                    Power[player].Speed = (sbyte)Math.Min(Power[player].Speed + 1, PlayerPowers.MAX_SPEED);
+                    Stats[player].Speed = (sbyte)Math.Min(Stats[player].Speed + 1, BombermanOnline.Stats.MAX_SPEED);
                     break;
                 case Powers.IDS.GETA:
-                    Power[player].Speed = (sbyte)Math.Max(Power[player].Speed - 1, PlayerPowers.MIN_SPEED);
+                    Stats[player].Speed = (sbyte)Math.Max(Stats[player].Speed - 1, BombermanOnline.Stats.MIN_SPEED);
                     break;
             }
         }

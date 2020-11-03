@@ -53,8 +53,9 @@ namespace BombermanOnline {
             TimeLeft[i] = 3.5;
             Flags[i] = flags;
             SpawnTime[i] = T.Total;
-            Power[i] = Players.Power[owner].Fire;
+            Power[i] = Players.Stats[owner].Fire;
             Owner[i] = (byte)owner;
+            Players.BombsPlaced[owner]++;
             return i;
         }
         public static bool Despawn(int i) {
@@ -68,6 +69,7 @@ namespace BombermanOnline {
             Flags[i] = Flags[Count];
             SpawnTime[i] = SpawnTime[Count];
             Power[i] = Power[Count];
+            Players.BombsPlaced[Owner[i]]--;
             Owner[i] = Owner[Count];
             return true;
         }
@@ -101,7 +103,7 @@ namespace BombermanOnline {
                         w.PutTileXY(x, y);
                         w.Put(0, FLAGS_COUNT, (int)Flags[i]);
                         if (Flags[i].HasFlag(FLAGS.HAS_EXPLODED)) {
-                            w.Put(1, PlayerPowers.MAX_FIRE, Power[i]);
+                            w.Put(1, Stats.MAX_FIRE, Power[i]);
                             Despawn(i--);
                         }
                         NetServer.SendToAll(w, LiteNetLib.DeliveryMethod.ReliableOrdered);

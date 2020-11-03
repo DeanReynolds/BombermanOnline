@@ -65,6 +65,8 @@ namespace BombermanOnline {
                             Players.Input[j] |= Players.INPUT.MOV_RIGHT;
                     Players.Dir[j] = (Players.DIR)_r.ReadInt(0, 3);
                 } else if (p == NetClient.Packets.PLACE_BOMB) {
+                    if (Players.Stats[j].BombsPlaced >= Players.Stats[j].MaxBombs)
+                        return;
                     _r.ReadTileXY(out var x, out var y);
                     var flags = (Bombs.FLAGS)_r.ReadInt(0, Bombs.FLAGS_COUNT);
                     var w = CreatePacket(Packets.PLACE_BOMB);

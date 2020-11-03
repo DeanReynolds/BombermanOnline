@@ -87,7 +87,7 @@ namespace BombermanOnline {
                             var flags = (Bombs.FLAGS)_r.ReadInt(0, Bombs.FLAGS_COUNT);
                             var j = Bombs.Spawn(x, y, flags, 0);
                             if (flags.HasFlag(Bombs.FLAGS.HAS_EXPLODED)) {
-                                Bombs.Power[j] = (byte)_r.ReadInt(1, PlayerPowers.MAX_FIRE);
+                                Bombs.Power[j] = (byte)_r.ReadInt(1, Stats.MAX_FIRE);
                                 Bombs.Explode(j);
                                 Bombs.Despawn(j);
                             }
