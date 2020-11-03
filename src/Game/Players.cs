@@ -260,7 +260,7 @@ namespace BombermanOnline {
         }
         public static void Draw() {
             foreach (var i in _takenIDs)
-                if (!Flags[LocalID].HasFlag(FLAGS.IS_DEAD)) {
+                if (!Flags[i].HasFlag(FLAGS.IS_DEAD)) {
                     // var hb = new Rectangle((int)(XY[i].X - (HITBOX_WIDTH >> 1)), (int)(XY[i].Y - (HITBOX_HEIGHT >> 1)), HITBOX_WIDTH, HITBOX_HEIGHT);
                     // G.SB.FillRectangle(hb, Color.Blue);
                     var xy = XY[i].ToPoint().ToVector2();

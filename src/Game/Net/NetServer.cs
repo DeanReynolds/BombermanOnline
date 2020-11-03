@@ -99,7 +99,7 @@ namespace BombermanOnline {
                 var p = _players[peer];
                 Players.Insert(p);
                 _initialData.Clear(_initialDataStart); {
-                    PutPlayerID(_initialData, p);
+                    _initialData.PutPlayerID(p);
                     void PutPlayer(int j) {
                         _initialData.PutPlayerID(j);
                         _initialData.Put(0, 3, (int)Players.Dir[j]);

@@ -236,6 +236,7 @@ namespace BombermanOnline {
                     }
                 }
             SpawnExplosion(x, y, EXPLOSION_DIR.INTERSECTION);
+            Players.TryKillAt(x, y);
             TimeLeft[i] = 0;
         }
     }
