@@ -6,7 +6,7 @@ namespace BombermanOnline {
         public const sbyte MIN_SPEED = -3;
 
         public byte Fire;
-        public byte BombsPlaced;
+        public byte BombsInPlay;
         public byte MaxBombs;
         public sbyte Speed;
     }

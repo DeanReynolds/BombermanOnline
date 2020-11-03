@@ -87,7 +87,7 @@ namespace BombermanOnline {
                         Input[LocalID] |= INPUT.MOV_LEFT;
                 } else if (KeyboardCondition.Held(Keys.D))
                     Input[LocalID] |= INPUT.MOV_RIGHT;
-                if ((KeyboardCondition.Held(Keys.Space) || KeyboardCondition.Held(Keys.Enter)) && Stats[LocalID].BombsPlaced < Stats[LocalID].MaxBombs) {
+                if ((KeyboardCondition.Held(Keys.Space) || KeyboardCondition.Held(Keys.Enter)) && Stats[LocalID].BombsInPlay < Stats[LocalID].MaxBombs) {
                     int x = (int)XY[LocalID].X >> Tile.BITS_PER_SIZE,
                         y = (int)XY[LocalID].Y >> Tile.BITS_PER_SIZE;
                     if (!Bombs.HasBomb(x, y, out _)) {

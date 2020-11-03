@@ -55,7 +55,7 @@ namespace BombermanOnline {
             SpawnTime[i] = T.Total;
             Power[i] = Players.Stats[owner].Fire;
             Owner[i] = (byte)owner;
-            Players.BombsPlaced[owner]++;
+            Players.Stats[owner].BombsInPlay++;
             return i;
         }
         public static bool Despawn(int i) {
@@ -69,7 +69,7 @@ namespace BombermanOnline {
             Flags[i] = Flags[Count];
             SpawnTime[i] = SpawnTime[Count];
             Power[i] = Power[Count];
-            Players.BombsPlaced[Owner[i]]--;
+            Players.Stats[Owner[i]].BombsInPlay--;
             Owner[i] = Owner[Count];
             return true;
         }
