@@ -14,7 +14,7 @@ namespace BombermanOnline {
 
         public static bool IsRunning => _manager.IsRunning;
 
-        public enum Packets { PLAYER, PLACE_BOMB, SYNC_BOMBS, SPAWN_POWER, COLLECT_POWER, CHAT }
+        public enum Packets { PLAYER, PLACE_BOMB, SYNC_BOMBS, SPAWN_POWER, COLLECT_POWER, PLAYER_DIED, CHAT }
 
         static double _syncPlayersTimer;
 
@@ -85,6 +85,14 @@ namespace BombermanOnline {
                     w.PutPowerID(id);
                     SendToAll(w, DeliveryMethod.ReliableOrdered, peer);
                     Players.AddPower(id, j);
+                } else if (p == NetClient.Packets.PLAYER_DIED) {
+                    var xy = _r.ReadVector2();
+                    var w = CreatePacket(Packets.PLAYER_DIED);
+                    w.PutPlayerID(j);
+                    w.Put(xy);
+                    SendToAll(w, DeliveryMethod.ReliableOrdered, peer);
+                    Players.XY[j] = xy;
+                    Players.Kill(j);
                 }
             };
             _listener.PeerConnectedEvent += peer => {

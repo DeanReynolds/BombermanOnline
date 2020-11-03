@@ -23,7 +23,7 @@ namespace BombermanOnline {
         public override void Update() {
             Players.Update();
             Powers.Update();
-            Animations.Update();
+            Anims.Update();
             Bombs.Update();
         }
         public override void Draw() {
@@ -47,7 +47,7 @@ namespace BombermanOnline {
             G.SB.Begin(samplerState: SamplerState.PointClamp);
             Powers.Draw();
             Bombs.Draw();
-            Animations.Draw();
+            Anims.Draw();
             Players.Draw();
             G.SB.End();
             G.SB.GraphicsDevice.SetRenderTarget(null);

@@ -324,6 +324,20 @@
             <key type="filename">sprites/pd0.png</key>
             <key type="filename">sprites/pd1.png</key>
             <key type="filename">sprites/pd2.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.479167,0.833333</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>12,12,24,24</rect>
+                <key>scale9Paddings</key>
+                <rect>12,12,24,24</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
             <key type="filename">sprites/pm00.png</key>
             <key type="filename">sprites/pm01.png</key>
             <key type="filename">sprites/pm02.png</key>

@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 
 namespace BombermanOnline {
-    static class Animations {
+    static class Anims {
         public static Vector2[] XY { get; private set; }
         public static SpriteAnim[] Anim { get; private set; }
 

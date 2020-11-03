@@ -11,7 +11,7 @@ namespace BombermanOnline {
 
         public static bool IsRunning => _manager.IsRunning;
 
-        public enum Packets { PLAYER, PLACE_BOMB, COLLECT_POWER, CHAT }
+        public enum Packets { PLAYER, PLACE_BOMB, COLLECT_POWER, PLAYER_DIED, CHAT }
 
         static int _initialDataState;
 
@@ -99,6 +99,11 @@ namespace BombermanOnline {
                         if (Powers.HasPower(x, y, out var pi) && Powers.ID[pi] == id)
                             Powers.Despawn(pi);
                         Players.AddPower(id, j);
+                    } else if (p == NetServer.Packets.PLAYER_DIED) {
+                        var j = _r.ReadPlayerID();
+                        var xy = _r.ReadVector2();
+                        Players.XY[j] = xy;
+                        Players.Kill(j);
                     }
                 }
             };

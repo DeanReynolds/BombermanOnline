@@ -30,6 +30,8 @@ namespace BombermanOnline {
         [Flags]
         public enum FLAGS : byte { IS_DEAD = 1, CAN_KICK_BOMBS = 2, BOMBS_CAN_PIERCE = 4, HAS_LOUIE = 8 }
 
+        static SpriteAnim Death;
+
         static readonly LinkedList<int> _freeIDs = new LinkedList<int>();
         static readonly HashSet<int> _takenIDs = new HashSet<int>();
 
@@ -45,6 +47,10 @@ namespace BombermanOnline {
             _freeIDs.Clear();
             for (int i = 0; i < capacity; i++)
                 _freeIDs.AddLast(i);
+            var s = new [] {
+                G.Sprites["p20"], G.Sprites["pd0"], G.Sprites["pd1"], G.Sprites["pd2"],
+            };
+            Death = new SpriteAnim(false, .5f, 0, s[0], s[0], s[1], s[2], s[3]);
         }
 
         internal static void Insert(int i) {
@@ -73,6 +79,31 @@ namespace BombermanOnline {
             int i = _freeIDs.Last.Value;
             _freeIDs.RemoveLast();
             return i;
+        }
+        public static void Kill(int i) {
+            Flags[i] |= FLAGS.IS_DEAD;
+            Anims.Spawn(XY[i], Death);
+        }
+        public static bool TryKillAt(int x, int y) {
+            if (!Flags[LocalID].HasFlag(FLAGS.IS_DEAD)) {
+                int ptx = ((int)XY[LocalID].X) >> Tile.BITS_PER_SIZE,
+                    pty = ((int)XY[LocalID].Y) >> Tile.BITS_PER_SIZE;
+                if (ptx == x && pty == y) {
+                    if (NetServer.IsRunning) {
+                        var w = NetServer.CreatePacket(NetServer.Packets.PLAYER_DIED);
+                        w.PutPlayerID(LocalID);
+                        w.Put(XY[LocalID]);
+                        NetServer.SendToAll(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                    } else if (NetClient.IsRunning) {
+                        var w = NetClient.CreatePacket(NetClient.Packets.PLAYER_DIED);
+                        w.Put(XY[LocalID]);
+                        NetClient.Send(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                    }
+                    Kill(LocalID);
+                    return true;
+                }
+            }
+            return false;
         }
 
         public static void Update() {
@@ -228,29 +259,30 @@ namespace BombermanOnline {
             }
         }
         public static void Draw() {
-            foreach (var i in _takenIDs) {
-                // var hb = new Rectangle((int)(XY[i].X - (HITBOX_WIDTH >> 1)), (int)(XY[i].Y - (HITBOX_HEIGHT >> 1)), HITBOX_WIDTH, HITBOX_HEIGHT);
-                // G.SB.FillRectangle(hb, Color.Blue);
-                var xy = XY[i].ToPoint().ToVector2();
-                byte dir;
-                SpriteEffects effect = 0;
-                switch (Dir[i]) {
-                    case DIR.EAST:
-                        xy.X -= 1;
-                        dir = 1;
-                        break;
-                    case DIR.WEST:
-                        xy.X += 3;
-                        dir = 1;
-                        effect = SpriteEffects.FlipHorizontally;
-                        break;
-                    default:
-                        dir = (byte)Dir[i];
-                        break;
+            foreach (var i in _takenIDs)
+                if (!Flags[LocalID].HasFlag(FLAGS.IS_DEAD)) {
+                    // var hb = new Rectangle((int)(XY[i].X - (HITBOX_WIDTH >> 1)), (int)(XY[i].Y - (HITBOX_HEIGHT >> 1)), HITBOX_WIDTH, HITBOX_HEIGHT);
+                    // G.SB.FillRectangle(hb, Color.Blue);
+                    var xy = XY[i].ToPoint().ToVector2();
+                    byte dir;
+                    SpriteEffects effect = 0;
+                    switch (Dir[i]) {
+                        case DIR.EAST:
+                            xy.X -= 1;
+                            dir = 1;
+                            break;
+                        case DIR.WEST:
+                            xy.X += 3;
+                            dir = 1;
+                            effect = SpriteEffects.FlipHorizontally;
+                            break;
+                        default:
+                            dir = (byte)Dir[i];
+                            break;
+                    }
+                    var s = G.Sprites[$"p{dir}0"];
+                    G.SB.Draw(G.Sprites.Texture, xy, s.Source, Color.White, 0, s.Origin, 1, effect, 0);
                 }
-                var s = G.Sprites[$"p{dir}0"];
-                G.SB.Draw(G.Sprites.Texture, xy, s.Source, Color.White, 0, s.Origin, 1, effect, 0);
-            }
         }
 
         public static void Reset(int i) {

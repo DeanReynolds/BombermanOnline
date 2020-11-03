@@ -147,7 +147,7 @@ namespace BombermanOnline {
                         anim = ExplosionVert;
                         break;
                 }
-                Animations.Spawn(xy, anim);
+                Anims.Spawn(xy, anim);
             }
             static void SpawnPower(int x, int y) {
                 var xy = new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE);
@@ -170,13 +170,15 @@ namespace BombermanOnline {
                                 Explode(k);
                         } else if (G.Tiles[x, ry].ID == Tile.IDS.wall) {
                             G.Tiles[x, ry].ID = Tile.IDS.grass;
-                            Animations.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (ry << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
+                            Anims.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (ry << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
                             SpawnPower(x, ry);
                             continueUp = false;
                         } else if (G.IsTileSolid(x, ry))
                             continueUp = false;
-                        else
+                        else {
                             SpawnExplosion(x, ry, j != Power[i] ? EXPLOSION_DIR.VERT : EXPLOSION_DIR.NORTH);
+                            Players.TryKillAt(x, ry);
+                        }
                     }
                     if (continueRight) {
                         var rx = x + j;
@@ -186,13 +188,15 @@ namespace BombermanOnline {
                                 Explode(k);
                         } else if (G.Tiles[rx, y].ID == Tile.IDS.wall) {
                             G.Tiles[rx, y].ID = Tile.IDS.grass;
-                            Animations.Spawn(new Vector2((rx << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
+                            Anims.Spawn(new Vector2((rx << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
                             SpawnPower(rx, y);
                             continueRight = false;
                         } else if (G.IsTileSolid(rx, y))
                             continueRight = false;
-                        else
+                        else {
                             SpawnExplosion(rx, y, j != Power[i] ? EXPLOSION_DIR.HORIZ : EXPLOSION_DIR.EAST);
+                            Players.TryKillAt(rx, y);
+                        }
                     }
                     if (continueDown) {
                         var ry = y + j;
@@ -202,13 +206,15 @@ namespace BombermanOnline {
                                 Explode(k);
                         } else if (G.Tiles[x, ry].ID == Tile.IDS.wall) {
                             G.Tiles[x, ry].ID = Tile.IDS.grass;
-                            Animations.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (ry << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
+                            Anims.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (ry << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
                             SpawnPower(x, ry);
                             continueDown = false;
                         } else if (G.IsTileSolid(x, ry))
                             continueDown = false;
-                        else
+                        else {
                             SpawnExplosion(x, ry, j != Power[i] ? EXPLOSION_DIR.VERT : EXPLOSION_DIR.SOUTH);
+                            Players.TryKillAt(x, ry);
+                        }
                     }
                     if (continueLeft) {
                         var rx = x - j;
@@ -218,13 +224,15 @@ namespace BombermanOnline {
                                 Explode(k);
                         } else if (G.Tiles[rx, y].ID == Tile.IDS.wall) {
                             G.Tiles[rx, y].ID = Tile.IDS.grass;
-                            Animations.Spawn(new Vector2((rx << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
+                            Anims.Spawn(new Vector2((rx << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
                             SpawnPower(rx, y);
                             continueLeft = false;
                         } else if (G.IsTileSolid(rx, y))
                             continueLeft = false;
-                        else
+                        else {
                             SpawnExplosion(rx, y, j != Power[i] ? EXPLOSION_DIR.HORIZ : EXPLOSION_DIR.WEST);
+                            Players.TryKillAt(rx, y);
+                        }
                     }
                 }
             SpawnExplosion(x, y, EXPLOSION_DIR.INTERSECTION);

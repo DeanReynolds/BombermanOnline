@@ -115,7 +115,7 @@ namespace BombermanOnline {
             Window.ClientSizeChanged += OnScreenSizeChange;
             OnScreenSizeChange(null, null);
             Bombs.Init(100);
-            Animations.Init(375);
+            Anims.Init(375);
             Powers.Init(200);
         }
 
