@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace BombermanOnline {
     static class Bombs {
-        public static readonly int FLAGS_COUNT = Enum.GetValues(typeof(FLAGS)).Length;
+        public static readonly int FLAGS_COUNT = (int)MathF.Pow(Enum.GetValues(typeof(FLAGS)).Length, 2);
 
         public static int Count { get; private set; }
         public static Vector2[] XY { get; private set; }

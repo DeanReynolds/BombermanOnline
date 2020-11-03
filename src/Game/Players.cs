@@ -9,6 +9,7 @@ namespace BombermanOnline {
     static class Players {
         public const int HITBOX_WIDTH = 14,
             HITBOX_HEIGHT = 11;
+        public static readonly int FLAGS_COUNT = (int)MathF.Pow(Enum.GetValues(typeof(FLAGS)).Length, 2);
 
         public static int MaxPlayers { get; private set; }
         public static int LocalID { get; private set; } = -1;
@@ -155,25 +156,29 @@ namespace BombermanOnline {
                         for (var x = ptx + dir; x != pdt; x += dir) {
                             if (x < 0 || x >= G.Tiles.GetLength(0))
                                 break;
-                            if (hb.Intersects(new Rectangle(x << Tile.BITS_PER_SIZE, ry << Tile.BITS_PER_SIZE, Tile.SIZE, Tile.SIZE))) {
-                                if (G.IsTileSolid(x, ry) || Bombs.HasBomb(x, ry, out _)) {
-                                    if (MathF.Abs(ptx - x) < MathF.Abs(ptx - nt))
-                                        nt = x;
-                                    di = true;
-                                    break;
-                                }
-                                if (Powers.HasPower(x, ry, out var pi)) {
-                                    // var phb = new Rectangle((int)(Powers.XY[j].X - (Powers.HITBOX_WIDTH >> 1)), (int)(Powers.XY[j].Y - (Powers.HITBOX_HEIGHT >> 1)), Powers.HITBOX_WIDTH, Powers.HITBOX_HEIGHT);
-                                    // if (hb.Intersects(phb))
-                                    CollectPower(i, pi, x, ry);
-                                }
+                            if ((G.IsTileSolid(x, ry) || Bombs.HasBomb(x, ry, out _)) &&
+                                hb.Intersects(new Rectangle(x << Tile.BITS_PER_SIZE, ry << Tile.BITS_PER_SIZE, Tile.SIZE, Tile.SIZE))) {
+                                if (MathF.Abs(ptx - x) < MathF.Abs(ptx - nt))
+                                    nt = x;
+                                di = true;
+                                break;
                             }
                         }
                     }
                     if (di)
                         XY[i].X = (nt << Tile.BITS_PER_SIZE) + (dir < 0 ? Tile.SIZE : 0) - (dir * (hb.Width / 2f));
-                    if ((int)XY[i].X != oldXY)
+                    if ((int)XY[i].X != oldXY) {
                         Dir[i] = dir == 1 ? DIR.EAST : DIR.WEST;
+                        int nptx = ((int)XY[i].X) >> Tile.BITS_PER_SIZE;
+                        if (nptx != ptx) {
+                            ptx = nptx;
+                            if (Powers.HasPower(ptx, pty, out var pi)) {
+                                // var phb = new Rectangle((int)(Powers.XY[pi].X - (Powers.HITBOX_WIDTH >> 1)), (int)(Powers.XY[pi].Y - (Powers.HITBOX_HEIGHT >> 1)), Powers.HITBOX_WIDTH, Powers.HITBOX_HEIGHT);
+                                // if (hb.Intersects(phb))
+                                CollectPower(i, pi, ptx, pty);
+                            }
+                        }
+                    }
                 }
                 dir = 0;
                 oldXY = (int)XY[i].Y;
@@ -196,25 +201,29 @@ namespace BombermanOnline {
                         for (var y = pty + dir; y != pdt; y += dir) {
                             if (y < 0 || y >= G.Tiles.GetLength(1))
                                 break;
-                            if (hb.Intersects(new Rectangle(rx << Tile.BITS_PER_SIZE, y << Tile.BITS_PER_SIZE, Tile.SIZE, Tile.SIZE))) {
-                                if (G.IsTileSolid(rx, y) || Bombs.HasBomb(rx, y, out _)) {
-                                    if (MathF.Abs(pty - y) < MathF.Abs(pty - nt))
-                                        nt = y;
-                                    di = true;
-                                    break;
-                                }
-                                if (Powers.HasPower(rx, y, out var pi)) {
-                                    // var phb = new Rectangle((int)(Powers.XY[j].X - (Powers.HITBOX_WIDTH >> 1)), (int)(Powers.XY[j].Y - (Powers.HITBOX_HEIGHT >> 1)), Powers.HITBOX_WIDTH, Powers.HITBOX_HEIGHT);
-                                    // if (hb.Intersects(phb))
-                                    CollectPower(i, pi, rx, y);
-                                }
+                            if ((G.IsTileSolid(rx, y) || Bombs.HasBomb(rx, y, out _)) &&
+                                hb.Intersects(new Rectangle(rx << Tile.BITS_PER_SIZE, y << Tile.BITS_PER_SIZE, Tile.SIZE, Tile.SIZE))) {
+                                if (MathF.Abs(pty - y) < MathF.Abs(pty - nt))
+                                    nt = y;
+                                di = true;
+                                break;
                             }
                         }
                     }
                     if (di)
                         XY[i].Y = (nt << Tile.BITS_PER_SIZE) + (dir < 0 ? Tile.SIZE : 0) - (dir * (hb.Height / 2f));
-                    if ((int)XY[i].Y != oldXY)
+                    if ((int)XY[i].Y != oldXY) {
                         Dir[i] = dir == 1 ? DIR.SOUTH : DIR.NORTH;
+                        int npty = ((int)XY[i].Y) >> Tile.BITS_PER_SIZE;
+                        if (npty != pty) {
+                            pty = npty;
+                            if (Powers.HasPower(ptx, pty, out var pi)) {
+                                // var phb = new Rectangle((int)(Powers.XY[pi].X - (Powers.HITBOX_WIDTH >> 1)), (int)(Powers.XY[pi].Y - (Powers.HITBOX_HEIGHT >> 1)), Powers.HITBOX_WIDTH, Powers.HITBOX_HEIGHT);
+                                // if (hb.Intersects(phb))
+                                CollectPower(i, pi, ptx, pty);
+                            }
+                        }
+                    }
                 }
             }
         }

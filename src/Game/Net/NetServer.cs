@@ -63,7 +63,6 @@ namespace BombermanOnline {
                             Players.Input[j] |= Players.INPUT.MOV_LEFT;
                         else
                             Players.Input[j] |= Players.INPUT.MOV_RIGHT;
-                    Players.Dir[j] = (Players.DIR)_r.ReadInt(0, 3);
                 } else if (p == NetClient.Packets.PLACE_BOMB) {
                     if (Players.Stats[j].BombsInPlay >= Players.Stats[j].MaxBombs)
                         return;
@@ -96,6 +95,7 @@ namespace BombermanOnline {
                     void PutPlayer(int j) {
                         _initialData.PutPlayerID(j);
                         _initialData.Put(0, 3, (int)Players.Dir[j]);
+                        _initialData.Put(0, Players.FLAGS_COUNT, (int)Players.Flags[j]);
                     }
                     PutPlayer(Players.LocalID);
                     foreach (var j in _peers.Keys)
@@ -162,7 +162,6 @@ namespace BombermanOnline {
                                 w.Put(0, 1, 1);
                             } else
                                 w.Put(false);
-                            w.Put(0, 3, (int)Players.Dir[j]);
                         }
                     Send(w, _peers[p], DeliveryMethod.Sequenced);
                 }

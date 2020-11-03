@@ -40,6 +40,7 @@ namespace BombermanOnline {
                         int i = _r.ReadPlayerID();
                         Players.Insert(i);
                         Players.Dir[i] = (Players.DIR)_r.ReadInt(0, 3);
+                        Players.Flags[i] = (Players.FLAGS)_r.ReadInt(0, Players.FLAGS_COUNT);
                     }
                     _manager.FirstPeer.Send(new byte[0], DeliveryMethod.ReliableSequenced);
                     G.SetScr<GameScr>();
@@ -71,7 +72,6 @@ namespace BombermanOnline {
                                             Players.Input[j] |= Players.INPUT.MOV_LEFT;
                                         else
                                             Players.Input[j] |= Players.INPUT.MOV_RIGHT;
-                                    Players.Dir[j] = (Players.DIR)_r.ReadInt(0, 3);
                                 }
                                 break;
                         }
@@ -145,7 +145,6 @@ namespace BombermanOnline {
                     w.Put(0, 1, 1);
                 } else
                     w.Put(false);
-                w.Put(0, 3, (int)Players.Dir[j]);
                 Send(w, DeliveryMethod.Sequenced);
             }
         }
