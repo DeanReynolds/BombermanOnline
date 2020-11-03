@@ -20,8 +20,6 @@ namespace BombermanOnline {
         public static FLAGS[] Flags { get; private set; }
         public static Stats[] Stats { get; private set; }
 
-        public static readonly HashSet<int> AlivePlayers = new HashSet<int>();
-
         public enum DIR : byte { NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3 }
 
         [Flags]
@@ -50,29 +48,29 @@ namespace BombermanOnline {
             var s = new [] {
                 G.Sprites["p20"], G.Sprites["pd0"], G.Sprites["pd1"], G.Sprites["pd2"],
             };
-            Death = new SpriteAnim(false, .5f, 0, s[0], s[0], s[1], s[2], s[3]);
+            Death = new SpriteAnim(false, .5f, 0, s[0], s[1], s[2], s[3]);
         }
 
-        internal static void Insert(int i) {
+        internal static void Spawn(int i) {
             _freeIDs.Remove(i);
             _takenIDs.Add(i);
             // Flags[i] = FLAGS.IS_DEAD;
             XY[i] = new Vector2(24, 24);
             Reset(i);
         }
-        internal static void InsertLocal(int i) {
-            Insert(i);
+        internal static void SpawnLocal(int i) {
+            Spawn(i);
             LocalID = i;
         }
-        internal static void Remove(int i) {
+        internal static void Despawn(int i) {
             if (!_takenIDs.Remove(i))
                 return;
-            XY[i] = new Vector2(float.MinValue);
             _freeIDs.AddLast(i);
         }
-        internal static void Clear() {
+        internal static void DespawnAll() {
             foreach (int i in _takenIDs)
-                Remove(i);
+                _freeIDs.AddLast(i);
+            _takenIDs.Clear();
             LocalID = -1;
         }
         internal static int PopFreeID() {

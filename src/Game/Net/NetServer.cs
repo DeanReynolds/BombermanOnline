@@ -97,10 +97,10 @@ namespace BombermanOnline {
             };
             _listener.PeerConnectedEvent += peer => {
                 var p = _players[peer];
-                Players.Insert(p);
+                Players.Spawn(p);
                 _initialData.Clear(_initialDataStart); {
                     _initialData.PutPlayerID(p);
-                    void PutPlayer(int j) {
+                    static void PutPlayer(int j) {
                         _initialData.PutPlayerID(j);
                         _initialData.Put(0, 3, (int)Players.Dir[j]);
                         _initialData.Put(0, Players.FLAGS_COUNT, (int)Players.Flags[j]);
@@ -119,7 +119,7 @@ namespace BombermanOnline {
                     w.PutPlayerID(p);
                     SendToAll(w, DeliveryMethod.ReliableOrdered, peer);
                 }
-                Players.Remove(p);
+                Players.Despawn(p);
             };
             _listener.ConnectionRequestEvent += request => {
                 if (_manager.ConnectedPeersCount + 1 >= Players.MaxPlayers) {

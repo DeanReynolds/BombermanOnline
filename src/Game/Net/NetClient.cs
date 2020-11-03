@@ -35,10 +35,10 @@ namespace BombermanOnline {
                 _r.ReadFrom(reader);
                 if (_initialDataState == 0) {
                     Players.Init(_r.ReadByte() + 1);
-                    Players.InsertLocal(_r.ReadPlayerID());
+                    Players.SpawnLocal(_r.ReadPlayerID());
                     while (!_r.EndOfData) {
                         int i = _r.ReadPlayerID();
-                        Players.Insert(i);
+                        Players.Spawn(i);
                         Players.Dir[i] = (Players.DIR)_r.ReadInt(0, 3);
                         Players.Flags[i] = (Players.FLAGS)_r.ReadInt(0, Players.FLAGS_COUNT);
                     }
@@ -53,9 +53,9 @@ namespace BombermanOnline {
                             case 0:
                                 var k = NetServer.ReadPlayerID(_r);
                                 if (_r.ReadBool())
-                                    Players.Insert(k);
+                                    Players.Spawn(k);
                                 else
-                                    Players.Remove(k);
+                                    Players.Despawn(k);
                                 break;
                             case 1:
                                 while (!_r.EndOfData) {
@@ -109,7 +109,7 @@ namespace BombermanOnline {
             };
             _listener.PeerDisconnectedEvent += (peer, disconnectInfo) => {
                 // SERVER/HOST DIED
-                Players.Clear();
+                Players.DespawnAll();
                 _initialDataState = 0;
                 G.SetScr<MainScr>();
             };

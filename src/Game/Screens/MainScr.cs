@@ -9,7 +9,7 @@ namespace BombermanOnline {
         public override void Update() {
             if (KeyboardCondition.Pressed(Keys.D1)) {
                 NetServer.Host(8);
-                Players.InsertLocal(0);
+                Players.SpawnLocal(0);
                 G.SetScr<GameScr>();
             } else if (KeyboardCondition.Pressed(Keys.D2)) {
                 NetClient.Join("127.0.0.1");
