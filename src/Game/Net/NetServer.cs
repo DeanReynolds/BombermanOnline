@@ -14,7 +14,9 @@ namespace BombermanOnline {
 
         public static bool IsRunning => _manager.IsRunning;
 
-        public enum Packets { PLAYER, PLACE_BOMB, SYNC_BOMBS, SPAWN_POWER, COLLECT_POWER, PLAYER_DIED, CHAT }
+        public static double RestartGameInTime;
+
+        public enum Packets { PLAYER, PLACE_BOMB, SYNC_BOMBS, SPAWN_POWER, COLLECT_POWER, PLAYER_DIED, RESTART_GAME, CHAT }
 
         static double _syncPlayersTimer;
 
@@ -102,8 +104,10 @@ namespace BombermanOnline {
                     _initialData.PutPlayerID(p);
                     static void PutPlayer(int j) {
                         _initialData.PutPlayerID(j);
-                        _initialData.Put(0, 3, (int)Players.Dir[j]);
                         _initialData.Put(0, Players.FLAGS_COUNT, (int)Players.Flags[j]);
+                        _initialData.Put(0, Players.TEAMS_COUNT, (int)Players.Team[j]);
+                        if (!Players.Flags[j].HasFlag(Players.FLAGS.IS_DEAD))
+                            _initialData.Put(0, 3, (int)Players.Dir[j]);
                     }
                     PutPlayer(Players.LocalID);
                     foreach (var j in _peers.Keys)
@@ -172,6 +176,17 @@ namespace BombermanOnline {
                                 w.Put(false);
                         }
                     Send(w, _peers[p], DeliveryMethod.Sequenced);
+                }
+            }
+            if (RestartGameInTime > 0) {
+                if ((RestartGameInTime -= T.DeltaFull) <= 0) {
+                    var w = NetServer.CreatePacket(NetServer.Packets.RESTART_GAME);
+                    NetServer.SendToAll(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                    Bombs.DespawnAll();
+                    Powers.DespawnAll();
+                    Anims.DespawnAll();
+                    Players.ResetAll();
+                    G.MakeMap(G.Tiles.GetLength(0), G.Tiles.GetLength(1));
                 }
             }
         }

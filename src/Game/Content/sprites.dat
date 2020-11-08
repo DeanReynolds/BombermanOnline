@@ -5,7 +5,7 @@
 # https://www.codeandweb.com/texturepacker/monogame
 #
 # Sprite sheet: sprites.png (128 x 256)
-# $TexturePacker:SmartUpdate:63a723c785c0e7f4f4d7e1d835351fd2:544c5f6c8c16037b71974198d7dc2b27:784d698da94b14b4fbde70f1a521a9a9$
+# $TexturePacker:SmartUpdate:3e47e0ef0ec1d19f5e14258661b7c951:544c5f6c8c16037b71974198d7dc2b27:784d698da94b14b4fbde70f1a521a9a9$
 #
 
 +bomb_down;0;1;1;32;32;32;32;0.5;0.5

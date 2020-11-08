@@ -31,4 +31,15 @@
     </MonoGameContentReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ContentWithTargetPath Include="..\x64\fmod.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="runtimes\win-x64\native\fmod.dll" />
+    <ContentWithTargetPath Include="..\x64\libfmod.so" CopyToOutputDirectory="PreserveNewest" TargetPath="runtimes\linux-x64\native\libfmod.so" />
+    <ContentWithTargetPath Include="..\x64\libfmod.so.11" CopyToOutputDirectory="PreserveNewest" TargetPath="runtimes\linux-x64\native\libfmod.so.11" />
+    <ContentWithTargetPath Include="..\x64\libfmod.so.11.2" CopyToOutputDirectory="PreserveNewest" TargetPath="runtimes\linux-x64\native\libfmod.so.11.2" />
+    <ContentWithTargetPath Include="..\x86\fmod.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="runtimes\win-x86\native\fmod.dll" />
+    <ContentWithTargetPath Include="..\x86\libfmod.so" CopyToOutputDirectory="PreserveNewest" TargetPath="runtimes\linux-x86\native\libfmod.so" />
+    <ContentWithTargetPath Include="..\x86\libfmod.so.11" CopyToOutputDirectory="PreserveNewest" TargetPath="runtimes\linux-x86\native\libfmod.so.11" />
+    <ContentWithTargetPath Include="..\x86\libfmod.so.11.2" CopyToOutputDirectory="PreserveNewest" TargetPath="runtimes\linux-x86\native\libfmod.so.11.2" />
+  </ItemGroup>
+
 </Project>

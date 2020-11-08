@@ -12,7 +12,7 @@ namespace BombermanOnline {
         public static IDS[] ID { get; private set; }
         public static float[] SpawnTime { get; private set; }
 
-        public enum IDS : byte { FIRE_UP, FIRE_DOWN, FULL_FIRE, BOMB_UP, BOMB_DOWN, POWER_BOMB, SKATE, GETA, BOMB_KICK, BOMB_PIERCE }
+        public enum IDS : byte { FIRE_UP = 1, FIRE_DOWN = 2, FULL_FIRE = 3, BOMB_UP = 4, BOMB_DOWN = 5, POWER_BOMB = 6, SKATE = 7, GETA = 8, BOMB_KICK = 9, BOMB_PIERCE = 10, LOUIE = 11 }
 
         public static void Init(int capacity) {
             XY = new Vector2[capacity];
@@ -20,9 +20,9 @@ namespace BombermanOnline {
             SpawnTime = new float[capacity];
         }
 
-        public static void Spawn(Vector2 xy, IDS id) {
+        public static void Spawn(int x, int y, IDS id) {
             var i = Count++;
-            XY[i] = xy;
+            XY[i] = new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE);
             ID[i] = id;
             SpawnTime[i] = T.Total;
         }
@@ -36,6 +36,9 @@ namespace BombermanOnline {
             ID[i] = ID[Count];
             SpawnTime[i] = SpawnTime[Count];
             return true;
+        }
+        public static void DespawnAll() {
+            Count = 0;
         }
         public static bool HasPower(int x, int y, out int i) {
             for (var j = 0; j < Count; j++)

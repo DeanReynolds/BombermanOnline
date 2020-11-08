@@ -17,6 +17,7 @@ namespace BombermanOnline {
         public static Scr Scr { get; private set; }
         public static SpriteSheet Sprites { get; private set; }
         public static Tile[, ] Tiles { get; private set; }
+        public static FastRng Rng { get; private set; }
 
         static GraphicsDeviceManager _gfx;
 
@@ -111,6 +112,7 @@ namespace BombermanOnline {
             foreach (var s in Assembly.GetExecutingAssembly().GetTypes().Where(x => x.IsClass && !x.IsAbstract && x.IsSubclassOf(typeof(Scr))))
                 _scr.Add(s, (Scr)Activator.CreateInstance(s));
             Scr = _scr[typeof(MainScr)];
+            Rng = new FastRng();
             base.Initialize();
             Window.ClientSizeChanged += OnScreenSizeChange;
             OnScreenSizeChange(null, null);
@@ -122,6 +124,7 @@ namespace BombermanOnline {
         protected override void LoadContent() {
             SB = new SpriteBatch(GraphicsDevice);
             Viewport = GraphicsDevice.Viewport;
+            FMOD.Init(Content.RootDirectory);
             SpriteBatchExtensions.Init();
             Sprites = SpriteSheet.Load(Content.Load<Texture2D>("sprites"), "sprites.dat");
             Scr.Open();

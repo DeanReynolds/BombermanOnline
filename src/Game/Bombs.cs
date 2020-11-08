@@ -20,6 +20,8 @@ namespace BombermanOnline {
         enum EXPLOSION_DIR : byte { INTERSECTION = 0, NORTH = 1, EAST = 2, VERT = 3, HORIZ = 4, WEST = 5, SOUTH = 6 }
 
         static SpriteAnim ExplosionIntersection, ExplosionNorth, ExplosionEast, ExplosionVert, ExplosionHoriz, ExplosionWest, ExplosionSouth, WallExplosion;
+        static(int X, int Y, Powers.IDS Power)[] _powersSpawned;
+        static int _powersSpawnedCount;
 
         public static void Init(int capacity) {
             XY = new Vector2[capacity];
@@ -45,6 +47,7 @@ namespace BombermanOnline {
             ExplosionWest = new SpriteAnim(false, explosionSpeed, SpriteEffects.FlipHorizontally, s[8], s[9], s[10], s[9], s[10], s[9], s[10], s[9], s[10], s[11]);
             ExplosionSouth = new SpriteAnim(false, explosionSpeed, SpriteEffects.FlipVertically, s[4], s[5], s[6], s[5], s[6], s[5], s[6], s[5], s[6], s[7]);
             WallExplosion = new SpriteAnim(false, .75f, 0, s[20], s[21], s[22], s[23], s[24], s[25]);
+            _powersSpawned = new(int, int, Powers.IDS)[100];
         }
 
         public static int Spawn(int x, int y, FLAGS flags, int owner) {
@@ -74,8 +77,7 @@ namespace BombermanOnline {
             return true;
         }
         public static void DespawnAll() {
-            for (var i = 0; i < Count; i++)
-                Despawn(i);
+            Count = 0;
         }
         public static bool HasBomb(int x, int y, out int i) {
             for (var j = 0; j < Count; j++)
@@ -90,6 +92,7 @@ namespace BombermanOnline {
         public static void Update() {
             if (NetServer.IsRunning) {
                 var hasABombExploded = false;
+                _powersSpawnedCount = 0;
                 for (var i = 0; i < Count; i++)
                     if ((TimeLeft[i] -= T.DeltaFull) <= 0 && !Flags[i].HasFlag(FLAGS.HAS_EXPLODED)) {
                         Explode(i);
@@ -97,17 +100,23 @@ namespace BombermanOnline {
                     }
                 if (hasABombExploded) {
                     var w = NetServer.CreatePacket(NetServer.Packets.SYNC_BOMBS);
+                    w.Put(1, XY.Length, Count);
                     for (var i = 0; i < Count; i++) {
                         int x = (int)XY[i].X >> Tile.BITS_PER_SIZE,
                             y = (int)XY[i].Y >> Tile.BITS_PER_SIZE;
                         w.PutTileXY(x, y);
                         w.Put(0, FLAGS_COUNT, (int)Flags[i]);
                         if (Flags[i].HasFlag(FLAGS.HAS_EXPLODED)) {
-                            w.Put(1, Stats.MAX_FIRE, Power[i]);
+                            w.Put(1, PlayerStats.MAX_FIRE, Power[i]);
                             Despawn(i--);
                         }
-                        NetServer.SendToAll(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
                     }
+                    for (var i = 0; i < _powersSpawnedCount; i++) {
+                        var p = _powersSpawned[i];
+                        w.PutTileXY(p.X, p.Y);
+                        w.PutPowerID(p.Power);
+                    }
+                    NetServer.SendToAll(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
                 }
             }
         }
@@ -149,9 +158,13 @@ namespace BombermanOnline {
                 }
                 Anims.Spawn(xy, anim);
             }
-            static void SpawnPower(int x, int y) {
-                var xy = new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE);
-                Powers.Spawn(xy, Powers.IDS.FIRE_UP);
+            static Powers.IDS SpawnPower(int x, int y) {
+                if (NetClient.IsRunning)
+                    return 0;
+                var power = G.Rng.NextValue(Powers.IDS.FIRE_UP, Powers.IDS.FIRE_DOWN, Powers.IDS.BOMB_UP, Powers.IDS.BOMB_DOWN, Powers.IDS.SKATE, Powers.IDS.GETA);
+                _powersSpawned[_powersSpawnedCount++] = (x, y, power);
+                Powers.Spawn(x, y, power);
+                return power;
             }
             Flags[i] |= FLAGS.HAS_EXPLODED;
             int x = (int)XY[i].X >> Tile.BITS_PER_SIZE,

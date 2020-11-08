@@ -27,6 +27,9 @@ namespace BombermanOnline {
             Anim[i] = Anim[Count];
             return true;
         }
+        public static void DespawnAll() {
+            Count = 0;
+        }
 
         public static void Update() {
             for (var i = 0; i < Count; i++) {

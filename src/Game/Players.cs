@@ -6,10 +6,22 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 namespace BombermanOnline {
+    struct PlayerStats {
+        public const int MAX_FIRE = 10,
+            MAX_BOMBS = 8,
+            MAX_SPEED = 3;
+        public const sbyte MIN_SPEED = -3;
+
+        public byte Fire;
+        public byte BombsInPlay;
+        public byte MaxBombs;
+        public sbyte Speed;
+    }
     static class Players {
         public const int HITBOX_WIDTH = 14,
             HITBOX_HEIGHT = 11;
         public static readonly int FLAGS_COUNT = (int)MathF.Pow(Enum.GetValues(typeof(FLAGS)).Length, 2);
+        public static readonly int TEAMS_COUNT = Enum.GetValues(typeof(TEAMS)).Length - 1;
 
         public static int MaxPlayers { get; private set; }
         public static int LocalID { get; private set; } = -1;
@@ -18,7 +30,8 @@ namespace BombermanOnline {
         public static DIR[] Dir { get; private set; }
         public static SpriteAnim[] Anim { get; private set; }
         public static FLAGS[] Flags { get; private set; }
-        public static Stats[] Stats { get; private set; }
+        public static PlayerStats[] Stats { get; private set; }
+        public static TEAMS[] Team { get; private set; }
 
         public enum DIR : byte { NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3 }
 
@@ -28,10 +41,18 @@ namespace BombermanOnline {
         [Flags]
         public enum FLAGS : byte { IS_DEAD = 1, CAN_KICK_BOMBS = 2, BOMBS_CAN_PIERCE = 4, HAS_LOUIE = 8 }
 
+        public enum TEAMS : byte { FFA = 0 }
+
         static SpriteAnim Death;
 
         static readonly LinkedList<int> _freeIDs = new LinkedList<int>();
         static readonly HashSet<int> _takenIDs = new HashSet<int>();
+        static readonly Dictionary<TEAMS, byte> _playersAlive = new Dictionary<TEAMS, byte>();
+
+        static Players() {
+            for (var i = 0; i < TEAMS_COUNT + 1; i++)
+                _playersAlive.Add((TEAMS)i, 0);
+        }
 
         internal static void Init(int capacity) {
             MaxPlayers = capacity;
@@ -40,7 +61,8 @@ namespace BombermanOnline {
             Dir = new DIR[capacity];
             Anim = new SpriteAnim[capacity];
             Flags = new FLAGS[capacity];
-            Stats = new Stats[capacity];
+            Stats = new PlayerStats[capacity];
+            Team = new TEAMS[capacity];
             _takenIDs.Clear();
             _freeIDs.Clear();
             for (int i = 0; i < capacity; i++)
@@ -54,7 +76,7 @@ namespace BombermanOnline {
         internal static void Spawn(int i) {
             _freeIDs.Remove(i);
             _takenIDs.Add(i);
-            // Flags[i] = FLAGS.IS_DEAD;
+            Flags[i] = FLAGS.IS_DEAD;
             XY[i] = new Vector2(24, 24);
             Reset(i);
         }
@@ -81,23 +103,33 @@ namespace BombermanOnline {
         public static void Kill(int i) {
             Flags[i] |= FLAGS.IS_DEAD;
             Anims.Spawn(XY[i], Death);
+            _playersAlive[Team[i]]--;
         }
         public static bool TryKillAt(int x, int y) {
             if (!Flags[LocalID].HasFlag(FLAGS.IS_DEAD)) {
                 int ptx = ((int)XY[LocalID].X) >> Tile.BITS_PER_SIZE,
                     pty = ((int)XY[LocalID].Y) >> Tile.BITS_PER_SIZE;
                 if (ptx == x && pty == y) {
+                    Kill(LocalID);
                     if (NetServer.IsRunning) {
                         var w = NetServer.CreatePacket(NetServer.Packets.PLAYER_DIED);
                         w.PutPlayerID(LocalID);
                         w.Put(XY[LocalID]);
                         NetServer.SendToAll(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                        if (NetServer.RestartGameInTime <= 0) {
+                            var teamsAlive = 0;
+                            for (var i = 0; i < TEAMS_COUNT + 1; i++)
+                                if (_playersAlive[(TEAMS)i] > 0)
+                                    teamsAlive++;
+                            var multipleFFAAlive = _playersAlive[TEAMS.FFA] > 1;
+                            if (teamsAlive <= 1 && !multipleFFAAlive)
+                                NetServer.RestartGameInTime = 3;
+                        }
                     } else if (NetClient.IsRunning) {
                         var w = NetClient.CreatePacket(NetClient.Packets.PLAYER_DIED);
                         w.Put(XY[LocalID]);
                         NetClient.Send(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
                     }
-                    Kill(LocalID);
                     return true;
                 }
             }
@@ -161,7 +193,7 @@ namespace BombermanOnline {
             }
             int ptx, pty, dir;
             foreach (var i in _takenIDs) {
-                float moveSpd = (8 * Stats[i].Speed) + 50 * T.Delta, oldXY;
+                float moveSpd = (50 + (8 * Stats[i].Speed)) * T.Delta, oldXY;
                 ptx = ((int)XY[i].X) >> Tile.BITS_PER_SIZE;
                 pty = ((int)XY[i].Y) >> Tile.BITS_PER_SIZE;
                 dir = 0;
@@ -285,37 +317,42 @@ namespace BombermanOnline {
 
         public static void Reset(int i) {
             Flags[i] = 0;
-            Stats[i] = new Stats {
+            Stats[i] = new PlayerStats {
                 Fire = 1,
                 MaxBombs = 1,
                 Speed = 0
             };
+            _playersAlive[Team[i]]++;
+        }
+        public static void ResetAll() {
+            foreach (var i in _takenIDs)
+                Reset(i);
         }
         public static void AddPower(Powers.IDS id, int player) {
             switch (id) {
                 case Powers.IDS.FIRE_UP:
-                    Stats[player].Fire = (byte)Math.Min(Stats[player].Fire + 1, BombermanOnline.Stats.MAX_FIRE);
+                    Stats[player].Fire = (byte)Math.Min(Stats[player].Fire + 1, PlayerStats.MAX_FIRE);
                     break;
                 case Powers.IDS.FIRE_DOWN:
                     Stats[player].Fire = (byte)Math.Max(Stats[player].Fire - 1, 1);
                     break;
                 case Powers.IDS.FULL_FIRE:
-                    Stats[player].Fire = BombermanOnline.Stats.MAX_FIRE;
+                    Stats[player].Fire = PlayerStats.MAX_FIRE;
                     break;
                 case Powers.IDS.BOMB_UP:
-                    Stats[player].MaxBombs = (byte)Math.Min(Stats[player].MaxBombs + 1, BombermanOnline.Stats.MAX_BOMBS);
+                    Stats[player].MaxBombs = (byte)Math.Min(Stats[player].MaxBombs + 1, PlayerStats.MAX_BOMBS);
                     break;
                 case Powers.IDS.BOMB_DOWN:
                     Stats[player].MaxBombs = (byte)Math.Max(Stats[player].MaxBombs - 1, 1);
                     break;
                 case Powers.IDS.POWER_BOMB:
-                    Stats[player].MaxBombs = BombermanOnline.Stats.MAX_BOMBS;
+                    Stats[player].MaxBombs = PlayerStats.MAX_BOMBS;
                     break;
                 case Powers.IDS.SKATE:
-                    Stats[player].Speed = (sbyte)Math.Min(Stats[player].Speed + 1, BombermanOnline.Stats.MAX_SPEED);
+                    Stats[player].Speed = (sbyte)Math.Min(Stats[player].Speed + 1, PlayerStats.MAX_SPEED);
                     break;
                 case Powers.IDS.GETA:
-                    Stats[player].Speed = (sbyte)Math.Max(Stats[player].Speed - 1, BombermanOnline.Stats.MIN_SPEED);
+                    Stats[player].Speed = (sbyte)Math.Max(Stats[player].Speed - 1, PlayerStats.MIN_SPEED);
                     break;
             }
         }

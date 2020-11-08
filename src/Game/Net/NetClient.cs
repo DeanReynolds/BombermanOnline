@@ -39,8 +39,13 @@ namespace BombermanOnline {
                     while (!_r.EndOfData) {
                         int i = _r.ReadPlayerID();
                         Players.Spawn(i);
-                        Players.Dir[i] = (Players.DIR)_r.ReadInt(0, 3);
-                        Players.Flags[i] = (Players.FLAGS)_r.ReadInt(0, Players.FLAGS_COUNT);
+                        var flags = (Players.FLAGS)_r.ReadInt(0, Players.FLAGS_COUNT);
+                        Players.Team[i] = (Players.TEAMS)_r.ReadInt(0, Players.TEAMS_COUNT);
+                        if (!flags.HasFlag(Players.FLAGS.IS_DEAD)) {
+                            Players.Reset(i);
+                            Players.Dir[i] = (Players.DIR)_r.ReadInt(0, 3);
+                        }
+                        Players.Flags[i] = flags;
                     }
                     _manager.FirstPeer.Send(new byte[0], DeliveryMethod.ReliableSequenced);
                     G.SetScr<GameScr>();
@@ -82,15 +87,21 @@ namespace BombermanOnline {
                         Bombs.Spawn(x, y, flags, j);
                     } else if (p == NetServer.Packets.SYNC_BOMBS) {
                         Bombs.DespawnAll();
-                        while (!_r.EndOfData) {
+                        var c = _r.ReadInt(1, Bombs.XY.Length);
+                        for (var i = 0; i < c; i++) {
                             _r.ReadTileXY(out var x, out var y);
                             var flags = (Bombs.FLAGS)_r.ReadInt(0, Bombs.FLAGS_COUNT);
                             var j = Bombs.Spawn(x, y, flags, 0);
                             if (flags.HasFlag(Bombs.FLAGS.HAS_EXPLODED)) {
-                                Bombs.Power[j] = (byte)_r.ReadInt(1, Stats.MAX_FIRE);
+                                Bombs.Power[j] = (byte)_r.ReadInt(1, PlayerStats.MAX_FIRE);
                                 Bombs.Explode(j);
                                 Bombs.Despawn(j);
                             }
+                        }
+                        while (!_r.EndOfData) {
+                            _r.ReadTileXY(out var x, out var y);
+                            var id = _r.ReadPowerID();
+                            Powers.Spawn(x, y, id);
                         }
                     } else if (p == NetServer.Packets.COLLECT_POWER) {
                         var j = _r.ReadPlayerID();
@@ -104,6 +115,12 @@ namespace BombermanOnline {
                         var xy = _r.ReadVector2();
                         Players.XY[j] = xy;
                         Players.Kill(j);
+                    } else if (p == NetServer.Packets.RESTART_GAME) {
+                        Bombs.DespawnAll();
+                        Powers.DespawnAll();
+                        Anims.DespawnAll();
+                        Players.ResetAll();
+                        G.MakeMap(G.Tiles.GetLength(0), G.Tiles.GetLength(1));
                     }
                 }
             };
