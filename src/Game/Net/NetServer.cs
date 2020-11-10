@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using LiteNetLib;
+using Microsoft.Xna.Framework;
 
 namespace BombermanOnline {
     static class NetServer {
@@ -181,6 +182,19 @@ namespace BombermanOnline {
             if (RestartGameInTime > 0) {
                 if ((RestartGameInTime -= T.DeltaFull) <= 0) {
                     var w = NetServer.CreatePacket(NetServer.Packets.RESTART_GAME);
+                    var spawns = new List<Point> {
+                        new Point(1, 1),
+                        new Point(G.Tiles.GetLength(0) - 2, 1),
+                        new Point(1, G.Tiles.GetLength(1) - 2),
+                        new Point(G.Tiles.GetLength(0) - 2, G.Tiles.GetLength(1) - 2),
+                    };
+                    foreach (var i in Players.TakenIDs) {
+                        var j = G.Rng.Next(spawns.Count);
+                        w.PutPlayerID(i);
+                        w.PutTileXY(spawns[j].X, spawns[j].Y);
+                        Players.XY[i] = new Vector2((spawns[j].X << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (spawns[j].Y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE);
+                        spawns.RemoveAt(j);
+                    }
                     NetServer.SendToAll(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
                     Bombs.DespawnAll();
                     Powers.DespawnAll();

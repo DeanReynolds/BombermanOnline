@@ -33,6 +33,8 @@ namespace BombermanOnline {
         public static PlayerStats[] Stats { get; private set; }
         public static TEAMS[] Team { get; private set; }
 
+        public static readonly HashSet<int> TakenIDs = new HashSet<int>();
+
         public enum DIR : byte { NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3 }
 
         [Flags]
@@ -46,7 +48,6 @@ namespace BombermanOnline {
         static SpriteAnim Death;
 
         static readonly LinkedList<int> _freeIDs = new LinkedList<int>();
-        static readonly HashSet<int> _takenIDs = new HashSet<int>();
         static readonly Dictionary<TEAMS, byte> _playersAlive = new Dictionary<TEAMS, byte>();
 
         static Players() {
@@ -63,7 +64,7 @@ namespace BombermanOnline {
             Flags = new FLAGS[capacity];
             Stats = new PlayerStats[capacity];
             Team = new TEAMS[capacity];
-            _takenIDs.Clear();
+            TakenIDs.Clear();
             _freeIDs.Clear();
             for (int i = 0; i < capacity; i++)
                 _freeIDs.AddLast(i);
@@ -75,7 +76,7 @@ namespace BombermanOnline {
 
         internal static void Spawn(int i) {
             _freeIDs.Remove(i);
-            _takenIDs.Add(i);
+            TakenIDs.Add(i);
             Flags[i] = FLAGS.IS_DEAD;
             XY[i] = new Vector2(24, 24);
             Reset(i);
@@ -85,14 +86,14 @@ namespace BombermanOnline {
             LocalID = i;
         }
         internal static void Despawn(int i) {
-            if (!_takenIDs.Remove(i))
+            if (!TakenIDs.Remove(i))
                 return;
             _freeIDs.AddLast(i);
         }
         internal static void DespawnAll() {
-            foreach (int i in _takenIDs)
+            foreach (int i in TakenIDs)
                 _freeIDs.AddLast(i);
-            _takenIDs.Clear();
+            TakenIDs.Clear();
             LocalID = -1;
         }
         internal static int PopFreeID() {
@@ -192,7 +193,7 @@ namespace BombermanOnline {
                 Powers.Despawn(power);
             }
             int ptx, pty, dir;
-            foreach (var i in _takenIDs) {
+            foreach (var i in TakenIDs) {
                 float moveSpd = (50 + (8 * Stats[i].Speed)) * T.Delta, oldXY;
                 ptx = ((int)XY[i].X) >> Tile.BITS_PER_SIZE;
                 pty = ((int)XY[i].Y) >> Tile.BITS_PER_SIZE;
@@ -289,7 +290,7 @@ namespace BombermanOnline {
             }
         }
         public static void Draw() {
-            foreach (var i in _takenIDs)
+            foreach (var i in TakenIDs)
                 if (!Flags[i].HasFlag(FLAGS.IS_DEAD)) {
                     // var hb = new Rectangle((int)(XY[i].X - (HITBOX_WIDTH >> 1)), (int)(XY[i].Y - (HITBOX_HEIGHT >> 1)), HITBOX_WIDTH, HITBOX_HEIGHT);
                     // G.SB.FillRectangle(hb, Color.Blue);
@@ -325,7 +326,7 @@ namespace BombermanOnline {
             _playersAlive[Team[i]]++;
         }
         public static void ResetAll() {
-            foreach (var i in _takenIDs)
+            foreach (var i in TakenIDs)
                 Reset(i);
         }
         public static void AddPower(Powers.IDS id, int player) {

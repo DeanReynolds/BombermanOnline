@@ -106,6 +106,7 @@ namespace BombermanOnline {
                             y = (int)XY[i].Y >> Tile.BITS_PER_SIZE;
                         w.PutTileXY(x, y);
                         w.Put(0, FLAGS_COUNT, (int)Flags[i]);
+                        w.PutPlayerID(Owner[i]);
                         if (Flags[i].HasFlag(FLAGS.HAS_EXPLODED)) {
                             w.Put(1, PlayerStats.MAX_FIRE, Power[i]);
                             Despawn(i--);

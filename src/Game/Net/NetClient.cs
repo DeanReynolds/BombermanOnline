@@ -1,7 +1,9 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using LiteNetLib;
 using LiteNetLib.Utils;
+using Microsoft.Xna.Framework;
 
 namespace BombermanOnline {
     static class NetClient {
@@ -87,17 +89,26 @@ namespace BombermanOnline {
                         Bombs.Spawn(x, y, flags, j);
                     } else if (p == NetServer.Packets.SYNC_BOMBS) {
                         Bombs.DespawnAll();
+                        foreach (var i in Players.TakenIDs)
+                            Players.Stats[i].BombsInPlay = 0;
                         var c = _r.ReadInt(1, Bombs.XY.Length);
+                        var shouldExplode = ArrayPool<bool>.Shared.Rent(c);
                         for (var i = 0; i < c; i++) {
                             _r.ReadTileXY(out var x, out var y);
                             var flags = (Bombs.FLAGS)_r.ReadInt(0, Bombs.FLAGS_COUNT);
-                            var j = Bombs.Spawn(x, y, flags, 0);
+                            var j = Bombs.Spawn(x, y, flags & ~Bombs.FLAGS.HAS_EXPLODED, _r.ReadPlayerID());
                             if (flags.HasFlag(Bombs.FLAGS.HAS_EXPLODED)) {
                                 Bombs.Power[j] = (byte)_r.ReadInt(1, PlayerStats.MAX_FIRE);
-                                Bombs.Explode(j);
-                                Bombs.Despawn(j);
-                            }
+                                shouldExplode[j] = true;
+                            } else
+                                shouldExplode[j] = false;
                         }
+                        for (var i = 0; i < c; i++)
+                            if (shouldExplode[i] && !Bombs.Flags[i].HasFlag(Bombs.FLAGS.HAS_EXPLODED))
+                                Bombs.Explode(i);
+                        for (var i = 0; i < Bombs.Count; i++)
+                            if (Bombs.Flags[i].HasFlag(Bombs.FLAGS.HAS_EXPLODED))
+                                Bombs.Despawn(i--);
                         while (!_r.EndOfData) {
                             _r.ReadTileXY(out var x, out var y);
                             var id = _r.ReadPowerID();
@@ -121,6 +132,11 @@ namespace BombermanOnline {
                         Anims.DespawnAll();
                         Players.ResetAll();
                         G.MakeMap(G.Tiles.GetLength(0), G.Tiles.GetLength(1));
+                        while (!_r.EndOfData) {
+                            var j = _r.ReadPlayerID();
+                            _r.ReadTileXY(out var x, out var y);
+                            Players.XY[j] = new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE);
+                        }
                     }
                 }
             };
