@@ -49,6 +49,8 @@ namespace BombermanOnline {
                         w.PutPlayerID(j);
                         SendToAll(w, DeliveryMethod.ReliableOrdered, peer);
                     }
+                    if (Players.ShouldRestartGame())
+                        RestartGameInTime = 1;
                     return;
                 }
                 _r.ReadFrom(readerOutdated);

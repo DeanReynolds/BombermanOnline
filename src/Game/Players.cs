@@ -78,8 +78,6 @@ namespace BombermanOnline {
             _freeIDs.Remove(i);
             TakenIDs.Add(i);
             Flags[i] = FLAGS.IS_DEAD;
-            XY[i] = new Vector2(24, 24);
-            Reset(i);
         }
         internal static void SpawnLocal(int i) {
             Spawn(i);
@@ -117,15 +115,8 @@ namespace BombermanOnline {
                         w.PutPlayerID(LocalID);
                         w.Put(XY[LocalID]);
                         NetServer.SendToAll(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
-                        if (NetServer.RestartGameInTime <= 0) {
-                            var teamsAlive = 0;
-                            for (var i = 0; i < TEAMS_COUNT + 1; i++)
-                                if (_playersAlive[(TEAMS)i] > 0)
-                                    teamsAlive++;
-                            var multipleFFAAlive = _playersAlive[TEAMS.FFA] > 1;
-                            if (teamsAlive <= 1 && !multipleFFAAlive)
-                                NetServer.RestartGameInTime = 3;
-                        }
+                        if (NetServer.RestartGameInTime <= 0 && ShouldRestartGame())
+                            NetServer.RestartGameInTime = 3;
                     } else if (NetClient.IsRunning) {
                         var w = NetClient.CreatePacket(NetClient.Packets.PLAYER_DIED);
                         w.Put(XY[LocalID]);
@@ -135,6 +126,14 @@ namespace BombermanOnline {
                 }
             }
             return false;
+        }
+        public static bool ShouldRestartGame() {
+            var teamsAlive = 0;
+            for (var i = 0; i < TEAMS_COUNT + 1; i++)
+                if (_playersAlive[(TEAMS)i] > 0)
+                    teamsAlive++;
+            var multipleFFAAlive = _playersAlive[TEAMS.FFA] > 1;
+            return teamsAlive <= 1 && !multipleFFAAlive;
         }
 
         public static void Update() {
