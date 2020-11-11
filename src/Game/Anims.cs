@@ -42,7 +42,7 @@ namespace BombermanOnline {
         public static void Draw() {
             for (var i = 0; i < Count; i++) {
                 var s = Anim[i].Frames[Anim[i].Frame];
-                G.SB.Draw(G.Sprites.Texture, XY[i], s.Source, Color.White, 0, s.Origin, 1, Anim[i].Effects, 0);
+                G.SB.Draw(G.Sprites.Texture, XY[i], s.Source, Color.White, Anim[i].Rotation, s.Origin, Anim[i].Scale, Anim[i].Effects, 0);
             }
         }
     }

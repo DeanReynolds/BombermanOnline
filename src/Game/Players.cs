@@ -71,13 +71,15 @@ namespace BombermanOnline {
             var s = new [] {
                 G.Sprites["p20"], G.Sprites["pd0"], G.Sprites["pd1"], G.Sprites["pd2"],
             };
-            Death = new SpriteAnim(false, .5f, 0, s[0], s[1], s[2], s[3]);
+            Death = new SpriteAnim(false, .5f, 0, 1, 0, s[0], s[1], s[2], s[3]);
         }
 
         internal static void Spawn(int i) {
             _freeIDs.Remove(i);
             TakenIDs.Add(i);
             Flags[i] = FLAGS.IS_DEAD;
+            Reset(i);
+            XY[i] = new Vector2(24, 24);
         }
         internal static void SpawnLocal(int i) {
             Spawn(i);

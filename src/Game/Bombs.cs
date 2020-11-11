@@ -30,23 +30,26 @@ namespace BombermanOnline {
             SpawnTime = new float[capacity];
             Power = new byte[capacity];
             Owner = new byte[capacity];
-            const float explosionSpeed = 1;
             var s = new [] {
-                G.Sprites["explode00"], G.Sprites["explode01"], G.Sprites["explode02"], G.Sprites["explode03"],
-                G.Sprites["explode10"], G.Sprites["explode11"], G.Sprites["explode12"], G.Sprites["explode13"],
-                G.Sprites["explode20"], G.Sprites["explode21"], G.Sprites["explode22"], G.Sprites["explode23"],
-                G.Sprites["explode30"], G.Sprites["explode31"], G.Sprites["explode32"], G.Sprites["explode33"],
-                G.Sprites["explode40"], G.Sprites["explode41"], G.Sprites["explode42"], G.Sprites["explode43"],
+                G.Sprites["ex00"], G.Sprites["ex01"], G.Sprites["ex02"], G.Sprites["ex03"], G.Sprites["ex04"], G.Sprites["ex05"], G.Sprites["ex06"],
+                G.Sprites["ex10"], G.Sprites["ex11"], G.Sprites["ex12"], G.Sprites["ex13"], G.Sprites["ex14"], G.Sprites["ex15"], G.Sprites["ex16"],
+                G.Sprites["ex20"], G.Sprites["ex21"], G.Sprites["ex22"], G.Sprites["ex23"], G.Sprites["ex24"], G.Sprites["ex25"], G.Sprites["ex26"],
                 G.Sprites["wallblown0"], G.Sprites["wallblown1"], G.Sprites["wallblown2"], G.Sprites["wallblown3"], G.Sprites["wallblown4"], G.Sprites["wallblown5"]
             };
-            ExplosionIntersection = new SpriteAnim(false, explosionSpeed, 0, s[0], s[1], s[2], s[1], s[2], s[1], s[2], s[1], s[2], s[3]);
-            ExplosionNorth = new SpriteAnim(false, explosionSpeed, 0, s[4], s[5], s[6], s[5], s[6], s[5], s[6], s[5], s[6], s[7]);
-            ExplosionEast = new SpriteAnim(false, explosionSpeed, 0, s[8], s[9], s[10], s[9], s[10], s[9], s[10], s[9], s[10], s[11]);
-            ExplosionVert = new SpriteAnim(false, explosionSpeed, 0, s[12], s[13], s[14], s[13], s[14], s[13], s[14], s[13], s[14], s[15]);
-            ExplosionHoriz = new SpriteAnim(false, explosionSpeed, 0, s[16], s[17], s[18], s[17], s[18], s[17], s[18], s[17], s[18], s[19]);
-            ExplosionWest = new SpriteAnim(false, explosionSpeed, SpriteEffects.FlipHorizontally, s[8], s[9], s[10], s[9], s[10], s[9], s[10], s[9], s[10], s[11]);
-            ExplosionSouth = new SpriteAnim(false, explosionSpeed, SpriteEffects.FlipVertically, s[4], s[5], s[6], s[5], s[6], s[5], s[6], s[5], s[6], s[7]);
-            WallExplosion = new SpriteAnim(false, .75f, 0, s[20], s[21], s[22], s[23], s[24], s[25]);
+            const float HALF_PI = MathF.PI / 2,
+                SPLOSION_SPEED = 1;
+            ExplosionIntersection = new SpriteAnim(false, SPLOSION_SPEED, 0, .333333333f, 0, s[0], s[1], s[2], s[3], s[2], s[3], s[4], s[5], s[6]);
+            ExplosionHoriz = new SpriteAnim(false, SPLOSION_SPEED, 0, ExplosionIntersection.Scale, 0, s[7], s[8], s[9], s[10], s[9], s[10], s[11], s[12], s[13]);
+            ExplosionVert = ExplosionHoriz;
+            ExplosionVert.Rotation = HALF_PI;
+            ExplosionEast = new SpriteAnim(false, SPLOSION_SPEED, 0, ExplosionIntersection.Scale, 0, s[14], s[15], s[16], s[17], s[16], s[17], s[18], s[19], s[20]);
+            ExplosionWest = ExplosionEast;
+            ExplosionWest.Rotation = MathF.PI;
+            ExplosionSouth = ExplosionEast;
+            ExplosionSouth.Rotation = HALF_PI;
+            ExplosionNorth = ExplosionEast;
+            ExplosionNorth.Rotation = -HALF_PI;
+            WallExplosion = new SpriteAnim(false, SPLOSION_SPEED, 0, 1, 0, s[21], s[22], s[23], s[24], s[25], s[26]);
             _powersSpawned = new(int, int, Powers.IDS)[100];
         }
 
@@ -131,24 +134,22 @@ namespace BombermanOnline {
 
         public static void Explode(int i) {
             static void SpawnExplosion(int x, int y, EXPLOSION_DIR dir) {
+                if (Powers.HasPower(x, y, out var i))
+                    Powers.Despawn(i);
                 var xy = new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE);
                 SpriteAnim anim = ExplosionIntersection;
                 switch (dir) {
                     case EXPLOSION_DIR.NORTH:
                         anim = ExplosionNorth;
-                        xy.Y += Tile.HALF_SIZE;
                         break;
                     case EXPLOSION_DIR.EAST:
                         anim = ExplosionEast;
-                        xy.X -= Tile.HALF_SIZE;
                         break;
                     case EXPLOSION_DIR.SOUTH:
                         anim = ExplosionSouth;
-                        xy.Y += Tile.HALF_SIZE - 3;
                         break;
                     case EXPLOSION_DIR.WEST:
                         anim = ExplosionWest;
-                        xy.X -= Tile.HALF_SIZE - 3;
                         break;
                     case EXPLOSION_DIR.HORIZ:
                         anim = ExplosionHoriz;
