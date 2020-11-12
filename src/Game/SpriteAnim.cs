@@ -31,6 +31,12 @@ namespace BombermanOnline {
             Effects = effects;
             Frames = sprites;
             _frame = 0;
+            for (var i = 0; i < Frames.Length; i++) {
+                if (Effects.HasFlag(SpriteEffects.FlipHorizontally))
+                    Frames[i].Origin.X = Frames[i].Source.Width - Frames[i].Origin.X;
+                if (Effects.HasFlag(SpriteEffects.FlipVertically))
+                    Frames[i].Origin.Y = Frames[i].Source.Width - Frames[i].Origin.Y;
+            }
         }
 
         public void Update() {
@@ -40,5 +46,7 @@ namespace BombermanOnline {
                 else
                     _frame = MaxFrames;
         }
+
+        public void Restart() => _frame = 0;
     }
 }

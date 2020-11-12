@@ -17,6 +17,9 @@ namespace BombermanOnline {
         public byte MaxBombs;
         public sbyte Speed;
     }
+    struct PlayerAnims {
+        public SpriteAnim[] MoveDir;
+    }
     static class Players {
         public const int HITBOX_WIDTH = 14,
             HITBOX_HEIGHT = 11;
@@ -28,7 +31,7 @@ namespace BombermanOnline {
         public static Vector2[] XY { get; private set; }
         public static INPUT[] Input { get; private set; }
         public static DIR[] Dir { get; private set; }
-        public static SpriteAnim[] Anim { get; private set; }
+        public static PlayerAnims[] Anim { get; private set; }
         public static FLAGS[] Flags { get; private set; }
         public static PlayerStats[] Stats { get; private set; }
         public static TEAMS[] Team { get; private set; }
@@ -46,6 +49,7 @@ namespace BombermanOnline {
         public enum TEAMS : byte { FFA = 0 }
 
         static SpriteAnim Death;
+        static PlayerAnims PAWhiteMale;
 
         static readonly LinkedList<int> _freeIDs = new LinkedList<int>();
         static readonly Dictionary<TEAMS, byte> _playersAlive = new Dictionary<TEAMS, byte>();
@@ -60,7 +64,7 @@ namespace BombermanOnline {
             XY = new Vector2[capacity];
             Input = new INPUT[capacity];
             Dir = new DIR[capacity];
-            Anim = new SpriteAnim[capacity];
+            Anim = new PlayerAnims[capacity];
             Flags = new FLAGS[capacity];
             Stats = new PlayerStats[capacity];
             Team = new TEAMS[capacity];
@@ -70,6 +74,18 @@ namespace BombermanOnline {
                 _freeIDs.AddLast(i);
             var s = new [] {
                 G.Sprites["p20"], G.Sprites["pd0"], G.Sprites["pd1"], G.Sprites["pd2"],
+                G.Sprites["p00"], G.Sprites["p01"], G.Sprites["p02"],
+                G.Sprites["p10"], G.Sprites["p11"], G.Sprites["p12"],
+                G.Sprites["p20"], G.Sprites["p21"], G.Sprites["p22"],
+            };
+            const float MOVE_SPEED = .5f;
+            PAWhiteMale = new PlayerAnims {
+                MoveDir = new [] {
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[4], s[5], s[6]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[7], s[8], s[9]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[10], s[11], s[12]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, SpriteEffects.FlipHorizontally, s[7], s[8], s[9]),
+                }
             };
             Death = new SpriteAnim(false, .5f, 0, 1, 0, s[0], s[1], s[2], s[3]);
         }
@@ -195,11 +211,13 @@ namespace BombermanOnline {
             }
             int ptx, pty, dir;
             foreach (var i in TakenIDs) {
-                float moveSpd = (50 + (8 * Stats[i].Speed)) * T.Delta, oldXY;
+                float moveSpd = (50 + (8 * Stats[i].Speed)) * T.Delta,
+                    oldAxis;
+                var oldXY = XY[i];
                 ptx = ((int)XY[i].X) >> Tile.BITS_PER_SIZE;
                 pty = ((int)XY[i].Y) >> Tile.BITS_PER_SIZE;
                 dir = 0;
-                oldXY = (int)XY[i].X;
+                oldAxis = (int)XY[i].X;
                 if (Input[i].HasFlag(INPUT.MOV_LEFT)) {
                     XY[i].X -= moveSpd;
                     dir = -1;
@@ -212,6 +230,7 @@ namespace BombermanOnline {
                 var pdt = (((int)XY[i].X) >> Tile.BITS_PER_SIZE) + (dir * 2);
                 var nt = 100;
                 if (dir != 0) {
+                    hb.X += dir;
                     for (var y = -1; y <= 1; y++) {
                         var ry = pty + y;
                         if (ry < 0 || ry > G.Tiles.GetLength(1))
@@ -228,9 +247,10 @@ namespace BombermanOnline {
                             }
                         }
                     }
+                    hb.Y -= dir;
                     if (di)
                         XY[i].X = (nt << Tile.BITS_PER_SIZE) + (dir < 0 ? Tile.SIZE : 0) - (dir * (hb.Width / 2f));
-                    if ((int)XY[i].X != oldXY) {
+                    if ((int)XY[i].X != oldAxis) {
                         Dir[i] = dir == 1 ? DIR.EAST : DIR.WEST;
                         int nptx = ((int)XY[i].X) >> Tile.BITS_PER_SIZE;
                         if (nptx != ptx) {
@@ -244,7 +264,7 @@ namespace BombermanOnline {
                     }
                 }
                 dir = 0;
-                oldXY = (int)XY[i].Y;
+                oldAxis = (int)XY[i].Y;
                 if (Input[i].HasFlag(INPUT.MOV_UP)) {
                     XY[i].Y -= moveSpd;
                     dir = -1;
@@ -257,6 +277,7 @@ namespace BombermanOnline {
                     pdt = (((int)XY[i].Y) >> Tile.BITS_PER_SIZE) + (dir * 2);
                     nt = 100;
                     di = false;
+                    hb.Y += dir;
                     for (var x = -1; x <= 1; x++) {
                         var rx = ptx + x;
                         if (rx < 0 || rx > G.Tiles.GetLength(0))
@@ -273,9 +294,10 @@ namespace BombermanOnline {
                             }
                         }
                     }
+                    hb.Y -= dir;
                     if (di)
                         XY[i].Y = (nt << Tile.BITS_PER_SIZE) + (dir < 0 ? Tile.SIZE : 0) - (dir * (hb.Height / 2f));
-                    if ((int)XY[i].Y != oldXY) {
+                    if ((int)XY[i].Y != oldAxis) {
                         Dir[i] = dir == 1 ? DIR.SOUTH : DIR.NORTH;
                         int npty = ((int)XY[i].Y) >> Tile.BITS_PER_SIZE;
                         if (npty != pty) {
@@ -288,6 +310,10 @@ namespace BombermanOnline {
                         }
                     }
                 }
+                if (oldXY != XY[i])
+                    Anim[i].MoveDir[(int)Dir[i]].Update();
+                else
+                    Anim[i].MoveDir[(int)Dir[i]].Restart();
             }
         }
         public static void Draw() {
@@ -296,24 +322,9 @@ namespace BombermanOnline {
                     // var hb = new Rectangle((int)(XY[i].X - (HITBOX_WIDTH >> 1)), (int)(XY[i].Y - (HITBOX_HEIGHT >> 1)), HITBOX_WIDTH, HITBOX_HEIGHT);
                     // G.SB.FillRectangle(hb, Color.Blue);
                     var xy = XY[i].ToPoint().ToVector2();
-                    byte dir;
-                    SpriteEffects effect = 0;
-                    switch (Dir[i]) {
-                        case DIR.EAST:
-                            xy.X -= 1;
-                            dir = 1;
-                            break;
-                        case DIR.WEST:
-                            xy.X += 3;
-                            dir = 1;
-                            effect = SpriteEffects.FlipHorizontally;
-                            break;
-                        default:
-                            dir = (byte)Dir[i];
-                            break;
-                    }
-                    var s = G.Sprites[$"p{dir}0"];
-                    G.SB.Draw(G.Sprites.Texture, xy, s.Source, Color.White, 0, s.Origin, 1, effect, 0);
+                    var anim = Anim[i].MoveDir[(int)Dir[i]];
+                    var s = anim.Frames[anim.Frame];
+                    G.SB.Draw(G.Sprites.Texture, xy, s.Source, Color.White, anim.Rotation, s.Origin, 1, anim.Effects, 0);
                 }
         }
 
@@ -324,6 +335,7 @@ namespace BombermanOnline {
                 MaxBombs = 1,
                 Speed = 0
             };
+            Anim[i] = PAWhiteMale;
             _playersAlive[Team[i]]++;
         }
         public static void ResetAll() {
