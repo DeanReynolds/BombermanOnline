@@ -13,7 +13,7 @@ namespace BombermanOnline {
 
         public static bool IsRunning => _manager.IsRunning;
 
-        public enum Packets { PLAYER, PLACE_BOMB, COLLECT_POWER, PLAYER_DIED, CHAT }
+        public enum Packets { PLAYER, PLACE_BOMB, COLLECT_POWER, PLAYER_HIT, CHAT }
 
         static int _initialDataState;
 
@@ -38,6 +38,10 @@ namespace BombermanOnline {
                 if (_initialDataState == 0) {
                     Players.Init(_r.ReadByte() + 1);
                     Players.SpawnLocal(_r.ReadPlayerID());
+                    G.MakeMap(_r.ReadByte() + 1, _r.ReadByte() + 1);
+                    for (var x = 0; x < G.Tiles.GetLength(0); x++)
+                        for (var y = 0; y < G.Tiles.GetLength(1); y++)
+                            G.Tiles[x, y].ID = (Tile.IDS)_r.ReadInt(0, Tile.MAX_ID);
                     while (!_r.EndOfData) {
                         int i = _r.ReadPlayerID();
                         Players.Spawn(i);
@@ -121,7 +125,7 @@ namespace BombermanOnline {
                         if (Powers.HasPower(x, y, out var pi) && Powers.ID[pi] == id)
                             Powers.Despawn(pi);
                         Players.AddPower(id, j);
-                    } else if (p == NetServer.Packets.PLAYER_DIED) {
+                    } else if (p == NetServer.Packets.PLAYER_HIT) {
                         var j = _r.ReadPlayerID();
                         var xy = _r.ReadVector2();
                         Players.XY[j] = xy;
@@ -131,12 +135,16 @@ namespace BombermanOnline {
                         Powers.DespawnAll();
                         Anims.DespawnAll();
                         Players.ResetAll();
-                        G.MakeMap(G.Tiles.GetLength(0), G.Tiles.GetLength(1));
-                        while (!_r.EndOfData) {
+                        G.MakeMap(_r.ReadByte() + 1, _r.ReadByte() + 1);
+                        var players = _r.ReadByte();
+                        for (var i = 0; i < players; i++) {
                             var j = _r.ReadPlayerID();
                             _r.ReadTileXY(out var x, out var y);
                             Players.XY[j] = new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE);
                         }
+                        for (var x = 0; x < G.Tiles.GetLength(0); x++)
+                            for (var y = 0; y < G.Tiles.GetLength(1); y++)
+                                G.Tiles[x, y].ID = (Tile.IDS)_r.ReadInt(0, Tile.MAX_ID);
                     }
                 }
             };

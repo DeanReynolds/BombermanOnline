@@ -1,6 +1,5 @@
 using System;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace BombermanOnline {
     static class Bombs {
@@ -31,25 +30,25 @@ namespace BombermanOnline {
             Power = new byte[capacity];
             Owner = new byte[capacity];
             var s = new [] {
-                G.Sprites["ex00"], G.Sprites["ex01"], G.Sprites["ex02"], G.Sprites["ex03"], G.Sprites["ex04"], G.Sprites["ex05"], G.Sprites["ex06"],
-                G.Sprites["ex10"], G.Sprites["ex11"], G.Sprites["ex12"], G.Sprites["ex13"], G.Sprites["ex14"], G.Sprites["ex15"], G.Sprites["ex16"],
-                G.Sprites["ex20"], G.Sprites["ex21"], G.Sprites["ex22"], G.Sprites["ex23"], G.Sprites["ex24"], G.Sprites["ex25"], G.Sprites["ex26"],
+                G.Sprites["ex00"], G.Sprites["ex01"], G.Sprites["ex02"], G.Sprites["ex03"], G.Sprites["ex04"],
+                G.Sprites["ex10"], G.Sprites["ex11"], G.Sprites["ex12"], G.Sprites["ex13"], G.Sprites["ex14"],
+                G.Sprites["ex20"], G.Sprites["ex21"], G.Sprites["ex22"], G.Sprites["ex23"], G.Sprites["ex24"],
                 G.Sprites["wallblown0"], G.Sprites["wallblown1"], G.Sprites["wallblown2"], G.Sprites["wallblown3"], G.Sprites["wallblown4"], G.Sprites["wallblown5"]
             };
             const float HALF_PI = MathF.PI / 2,
                 SPLOSION_SPEED = 1;
-            ExplosionIntersection = new SpriteAnim(false, SPLOSION_SPEED, 0, .333333333f, 0, s[0], s[1], s[2], s[3], s[2], s[3], s[4], s[5], s[6]);
-            ExplosionHoriz = new SpriteAnim(false, SPLOSION_SPEED, 0, ExplosionIntersection.Scale, 0, s[7], s[8], s[9], s[10], s[9], s[10], s[11], s[12], s[13]);
+            ExplosionIntersection = new SpriteAnim(false, SPLOSION_SPEED, 0, 1, 0, s[2], s[3], s[4], s[3], s[4], s[3], s[4], s[3], s[2], s[1], s[0]);
+            ExplosionHoriz = new SpriteAnim(false, SPLOSION_SPEED, 0, ExplosionIntersection.Scale, 0, s[7], s[8], s[9], s[8], s[9], s[8], s[9], s[8], s[7], s[6], s[5]);
             ExplosionVert = ExplosionHoriz;
             ExplosionVert.Rotation = HALF_PI;
-            ExplosionEast = new SpriteAnim(false, SPLOSION_SPEED, 0, ExplosionIntersection.Scale, 0, s[14], s[15], s[16], s[17], s[16], s[17], s[18], s[19], s[20]);
+            ExplosionEast = new SpriteAnim(false, SPLOSION_SPEED, 0, ExplosionIntersection.Scale, 0, s[12], s[13], s[14], s[13], s[14], s[13], s[14], s[13], s[12], s[11], s[10]);
             ExplosionWest = ExplosionEast;
             ExplosionWest.Rotation = MathF.PI;
             ExplosionSouth = ExplosionEast;
             ExplosionSouth.Rotation = HALF_PI;
             ExplosionNorth = ExplosionEast;
             ExplosionNorth.Rotation = -HALF_PI;
-            WallExplosion = new SpriteAnim(false, SPLOSION_SPEED, 0, 1, 0, s[21], s[22], s[23], s[24], s[25], s[26]);
+            WallExplosion = new SpriteAnim(false, SPLOSION_SPEED, 0, 1, 0, s[15], s[16], s[17], s[18], s[19], s[20]);
             _powersSpawned = new(int, int, Powers.IDS)[100];
         }
 

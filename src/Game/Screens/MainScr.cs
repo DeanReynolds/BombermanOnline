@@ -8,6 +8,7 @@ namespace BombermanOnline {
 
         public override void Update() {
             if (KeyboardCondition.Pressed(Keys.D1)) {
+                G.MakeMap(25, 25);
                 NetServer.Host(8);
                 Players.SpawnLocal(0);
                 G.SetScr<GameScr>();

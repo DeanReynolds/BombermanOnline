@@ -7,10 +7,10 @@ using Microsoft.Xna.Framework.Input;
 
 namespace BombermanOnline {
     struct PlayerStats {
-        public const int MAX_FIRE = 10,
-            MAX_BOMBS = 8,
-            MAX_SPEED = 3;
-        public const sbyte MIN_SPEED = -3;
+        public const int MAX_FIRE = 15,
+            MAX_BOMBS = 12,
+            MAX_SPEED = 4;
+        public const sbyte MIN_SPEED = -4;
 
         public byte Fire;
         public byte BombsInPlay;
@@ -19,6 +19,12 @@ namespace BombermanOnline {
     }
     struct PlayerAnims {
         public SpriteAnim[] MoveDir;
+        public SpriteAnim[] MountedMoveDir;
+        public SpriteAnim Death;
+    }
+    struct LouieAnims {
+        public SpriteAnim[] MoveDir;
+        public SpriteAnim Death;
     }
     static class Players {
         public const int HITBOX_WIDTH = 14,
@@ -35,6 +41,7 @@ namespace BombermanOnline {
         public static FLAGS[] Flags { get; private set; }
         public static PlayerStats[] Stats { get; private set; }
         public static TEAMS[] Team { get; private set; }
+        public static LouieAnims[] Louie { get; private set; }
 
         public static readonly HashSet<int> TakenIDs = new HashSet<int>();
 
@@ -48,8 +55,8 @@ namespace BombermanOnline {
 
         public enum TEAMS : byte { FFA = 0 }
 
-        static SpriteAnim Death;
         static PlayerAnims PAWhiteMale;
+        static LouieAnims LAGreen, LABlue, LABrown, LAPink;
 
         static readonly LinkedList<int> _freeIDs = new LinkedList<int>();
         static readonly Dictionary<TEAMS, byte> _playersAlive = new Dictionary<TEAMS, byte>();
@@ -68,26 +75,89 @@ namespace BombermanOnline {
             Flags = new FLAGS[capacity];
             Stats = new PlayerStats[capacity];
             Team = new TEAMS[capacity];
+            Louie = new LouieAnims[capacity];
             TakenIDs.Clear();
             _freeIDs.Clear();
             for (int i = 0; i < capacity; i++)
                 _freeIDs.AddLast(i);
             var s = new [] {
-                G.Sprites["p20"], G.Sprites["pd0"], G.Sprites["pd1"], G.Sprites["pd2"],
                 G.Sprites["p00"], G.Sprites["p01"], G.Sprites["p02"],
                 G.Sprites["p10"], G.Sprites["p11"], G.Sprites["p12"],
                 G.Sprites["p20"], G.Sprites["p21"], G.Sprites["p22"],
+                G.Sprites["pm00"], G.Sprites["pm01"], G.Sprites["pm02"],
+                G.Sprites["pm10"], G.Sprites["pm11"], G.Sprites["pm12"],
+                G.Sprites["pm20"], G.Sprites["pm21"], G.Sprites["pm22"],
+                G.Sprites["p20"], G.Sprites["pd0"], G.Sprites["pd1"], G.Sprites["pd2"],
+                G.Sprites["lg00"], G.Sprites["lg01"], G.Sprites["lg02"],
+                G.Sprites["lg10"], G.Sprites["lg11"], G.Sprites["lg12"],
+                G.Sprites["lg20"], G.Sprites["lg21"], G.Sprites["lg22"],
+                G.Sprites["ld0"], G.Sprites["ld1"], G.Sprites["ld2"], G.Sprites["ld3"],
+                G.Sprites["lb00"], G.Sprites["lb01"], G.Sprites["lb02"],
+                G.Sprites["lb10"], G.Sprites["lb11"], G.Sprites["lb12"],
+                G.Sprites["lb20"], G.Sprites["lb21"], G.Sprites["lb22"],
+                G.Sprites["lbr00"], G.Sprites["lbr01"], G.Sprites["lbr02"],
+                G.Sprites["lbr10"], G.Sprites["lbr11"], G.Sprites["lbr12"],
+                G.Sprites["lbr20"], G.Sprites["lbr21"], G.Sprites["lbr22"],
+                G.Sprites["lp00"], G.Sprites["lp01"], G.Sprites["lp02"],
+                G.Sprites["lp10"], G.Sprites["lp11"], G.Sprites["lp12"],
+                G.Sprites["lp20"], G.Sprites["lp21"], G.Sprites["lp22"],
             };
             const float MOVE_SPEED = .5f;
             PAWhiteMale = new PlayerAnims {
                 MoveDir = new [] {
-                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[4], s[5], s[6]),
-                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[7], s[8], s[9]),
-                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[10], s[11], s[12]),
-                new SpriteAnim(true, MOVE_SPEED, 0, 1, SpriteEffects.FlipHorizontally, s[7], s[8], s[9]),
-                }
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[0], s[1], s[2]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[3], s[4], s[5]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[6], s[7], s[8]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, SpriteEffects.FlipHorizontally, s[3], s[4], s[5]),
+                },
+                MountedMoveDir = new [] {
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[9], s[10], s[11]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[12], s[13], s[14]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[15], s[16], s[17]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, SpriteEffects.FlipHorizontally, s[12], s[13], s[14]),
+                },
+                Death = new SpriteAnim(false, .5f, 0, 1, 0, s[18], s[19], s[20], s[21])
             };
-            Death = new SpriteAnim(false, .5f, 0, 1, 0, s[0], s[1], s[2], s[3]);
+            var glsi = 22;
+            LAGreen = new LouieAnims {
+                MoveDir = new [] {
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[glsi + 0], s[glsi + 1], s[glsi + 2]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[glsi + 3], s[glsi + 4], s[glsi + 5]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[glsi + 6], s[glsi + 7], s[glsi + 8]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, SpriteEffects.FlipHorizontally, s[glsi + 3], s[glsi + 4], s[glsi + 5]),
+                },
+                Death = new SpriteAnim(false, .5f, 0, 1, 0, s[glsi + 9], s[glsi + 10], s[glsi + 11], s[glsi + 12])
+            };
+            glsi = 35;
+            LABlue = new LouieAnims {
+                MoveDir = new [] {
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[glsi + 0], s[glsi + 1], s[glsi + 2]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[glsi + 3], s[glsi + 4], s[glsi + 5]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[glsi + 6], s[glsi + 7], s[glsi + 8]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, SpriteEffects.FlipHorizontally, s[glsi + 3], s[glsi + 4], s[glsi + 5]),
+                },
+                Death = LAGreen.Death
+            };
+            glsi = 44;
+            LABrown = new LouieAnims {
+                MoveDir = new [] {
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[glsi + 0], s[glsi + 1], s[glsi + 2]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[glsi + 3], s[glsi + 4], s[glsi + 5]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[glsi + 6], s[glsi + 7], s[glsi + 8]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, SpriteEffects.FlipHorizontally, s[glsi + 3], s[glsi + 4], s[glsi + 5]),
+                },
+                Death = LAGreen.Death
+            };
+            glsi = 53;
+            LAPink = new LouieAnims {
+                MoveDir = new [] {
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[glsi + 0], s[glsi + 1], s[glsi + 2]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[glsi + 3], s[glsi + 4], s[glsi + 5]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, 0, s[glsi + 6], s[glsi + 7], s[glsi + 8]),
+                new SpriteAnim(true, MOVE_SPEED, 0, 1, SpriteEffects.FlipHorizontally, s[glsi + 3], s[glsi + 4], s[glsi + 5]),
+                },
+                Death = LAGreen.Death
+            };
         }
 
         internal static void Spawn(int i) {
@@ -117,10 +187,22 @@ namespace BombermanOnline {
             _freeIDs.RemoveLast();
             return i;
         }
-        public static void Kill(int i) {
-            Flags[i] |= FLAGS.IS_DEAD;
-            Anims.Spawn(XY[i], Death);
-            _playersAlive[Team[i]]--;
+        public static bool Kill(int i) {
+            if (Flags[i].HasFlag(FLAGS.HAS_LOUIE)) {
+                Flags[i] &= ~FLAGS.HAS_LOUIE;
+                Anims.Spawn(XY[i], LAGreen.Death);
+                return false;
+            } else {
+                Flags[i] |= FLAGS.IS_DEAD;
+                Anims.Spawn(XY[i], Anim[i].Death);
+                _playersAlive[Team[i]]--;
+                if (NetServer.IsRunning) {
+                    // Console.WriteLine($@"{NetServer.RestartGameInTime <= 0},{ShouldRestartGame()}");
+                    if (NetServer.RestartGameInTime <= 0 && ShouldRestartGame())
+                        NetServer.RestartGameInTime = 3;
+                }
+                return true;
+            }
         }
         public static bool TryKillAt(int x, int y) {
             if (!Flags[LocalID].HasFlag(FLAGS.IS_DEAD)) {
@@ -129,14 +211,12 @@ namespace BombermanOnline {
                 if (ptx == x && pty == y) {
                     Kill(LocalID);
                     if (NetServer.IsRunning) {
-                        var w = NetServer.CreatePacket(NetServer.Packets.PLAYER_DIED);
+                        var w = NetServer.CreatePacket(NetServer.Packets.PLAYER_HIT);
                         w.PutPlayerID(LocalID);
                         w.Put(XY[LocalID]);
                         NetServer.SendToAll(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
-                        if (NetServer.RestartGameInTime <= 0 && ShouldRestartGame())
-                            NetServer.RestartGameInTime = 3;
                     } else if (NetClient.IsRunning) {
-                        var w = NetClient.CreatePacket(NetClient.Packets.PLAYER_DIED);
+                        var w = NetClient.CreatePacket(NetClient.Packets.PLAYER_HIT);
                         w.Put(XY[LocalID]);
                         NetClient.Send(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
                     }
@@ -167,6 +247,19 @@ namespace BombermanOnline {
                         Input[LocalID] |= INPUT.MOV_LEFT;
                 } else if (KeyboardCondition.Held(Keys.D))
                     Input[LocalID] |= INPUT.MOV_RIGHT;
+                if (KeyboardCondition.Pressed(Keys.U)) {
+                    Louie[LocalID] = LAGreen;
+                    Flags[LocalID] ^= FLAGS.HAS_LOUIE;
+                } else if (KeyboardCondition.Pressed(Keys.I)) {
+                    Louie[LocalID] = LABlue;
+                    Flags[LocalID] ^= FLAGS.HAS_LOUIE;
+                } else if (KeyboardCondition.Pressed(Keys.O)) {
+                    Louie[LocalID] = LABrown;
+                    Flags[LocalID] ^= FLAGS.HAS_LOUIE;
+                } else if (KeyboardCondition.Pressed(Keys.P)) {
+                    Louie[LocalID] = LAPink;
+                    Flags[LocalID] ^= FLAGS.HAS_LOUIE;
+                }
                 if ((KeyboardCondition.Held(Keys.Space) || KeyboardCondition.Held(Keys.Enter)) && Stats[LocalID].BombsInPlay < Stats[LocalID].MaxBombs) {
                     int x = (int)XY[LocalID].X >> Tile.BITS_PER_SIZE,
                         y = (int)XY[LocalID].Y >> Tile.BITS_PER_SIZE;
@@ -310,33 +403,59 @@ namespace BombermanOnline {
                         }
                     }
                 }
-                if (oldXY != XY[i])
-                    Anim[i].MoveDir[(int)Dir[i]].Update();
-                else
-                    Anim[i].MoveDir[(int)Dir[i]].Restart();
+                if (oldXY != XY[i]) {
+                    if (Flags[i].HasFlag(FLAGS.HAS_LOUIE)) {
+                        Anim[i].MountedMoveDir[(int)Dir[i]].Update();
+                        Louie[i].MoveDir[(int)Dir[i]].Update();
+                    } else
+                        Anim[i].MoveDir[(int)Dir[i]].Update();
+                } else {
+                    if (Flags[i].HasFlag(FLAGS.HAS_LOUIE)) {
+                        Anim[i].MountedMoveDir[(int)Dir[i]].Restart();
+                        Louie[i].MoveDir[(int)Dir[i]].Restart();
+                    } else
+                        Anim[i].MoveDir[(int)Dir[i]].Restart();
+                }
             }
         }
         public static void Draw() {
+            SpriteAnim anim, louieAnim;
+            Sprite s, louieS;
             foreach (var i in TakenIDs)
                 if (!Flags[i].HasFlag(FLAGS.IS_DEAD)) {
                     // var hb = new Rectangle((int)(XY[i].X - (HITBOX_WIDTH >> 1)), (int)(XY[i].Y - (HITBOX_HEIGHT >> 1)), HITBOX_WIDTH, HITBOX_HEIGHT);
                     // G.SB.FillRectangle(hb, Color.Blue);
                     var xy = XY[i].ToPoint().ToVector2();
-                    var anim = Anim[i].MoveDir[(int)Dir[i]];
-                    var s = anim.Frames[anim.Frame];
-                    G.SB.Draw(G.Sprites.Texture, xy, s.Source, Color.White, anim.Rotation, s.Origin, 1, anim.Effects, 0);
+                    if (Flags[i].HasFlag(FLAGS.HAS_LOUIE)) {
+                        anim = Anim[i].MountedMoveDir[(int)Dir[i]];
+                        s = anim.Frames[anim.Frame];
+                        louieAnim = Louie[i].MoveDir[(int)Dir[i]];
+                        louieS = louieAnim.Frames[louieAnim.Frame];
+                        if (Dir[i] == DIR.SOUTH) {
+                            G.SB.Draw(G.Sprites.Texture, xy, s.Source, Color.White, anim.Rotation, s.Origin, 1, anim.Effects, 0);
+                            G.SB.Draw(G.Sprites.Texture, xy, louieS.Source, Color.White, louieAnim.Rotation, louieS.Origin, 1, louieAnim.Effects, 0);
+                        } else {
+                            G.SB.Draw(G.Sprites.Texture, xy, louieS.Source, Color.White, louieAnim.Rotation, louieS.Origin, 1, louieAnim.Effects, 0);
+                            G.SB.Draw(G.Sprites.Texture, xy, s.Source, Color.White, anim.Rotation, s.Origin, 1, anim.Effects, 0);
+                        }
+                    } else {
+                        anim = Anim[i].MoveDir[(int)Dir[i]];
+                        s = anim.Frames[anim.Frame];
+                        G.SB.Draw(G.Sprites.Texture, xy, s.Source, Color.White, anim.Rotation, s.Origin, 1, anim.Effects, 0);
+                    }
                 }
         }
 
         public static void Reset(int i) {
-            Flags[i] = 0;
             Stats[i] = new PlayerStats {
                 Fire = 1,
                 MaxBombs = 1,
                 Speed = 0
             };
             Anim[i] = PAWhiteMale;
-            _playersAlive[Team[i]]++;
+            if (Flags[i].HasFlag(FLAGS.IS_DEAD))
+                _playersAlive[Team[i]]++;
+            Flags[i] = 0;
         }
         public static void ResetAll() {
             foreach (var i in TakenIDs)

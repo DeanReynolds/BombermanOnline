@@ -17,7 +17,7 @@ namespace BombermanOnline {
 
         public static double RestartGameInTime;
 
-        public enum Packets { PLAYER, PLACE_BOMB, SYNC_BOMBS, SPAWN_POWER, COLLECT_POWER, PLAYER_DIED, RESTART_GAME, CHAT }
+        public enum Packets { PLAYER, PLACE_BOMB, SYNC_BOMBS, SPAWN_POWER, COLLECT_POWER, PLAYER_HIT, RESTART_GAME, CHAT }
 
         static double _syncPlayersTimer;
 
@@ -45,8 +45,8 @@ namespace BombermanOnline {
                     _peers.Add(j, peer);
                     var w = CreatePacket(Packets.PLAYER); {
                         w.Put(0, PLAYER_SUB_IDS, 0);
-                        w.Put(true);
                         w.PutPlayerID(j);
+                        w.Put(true);
                         SendToAll(w, DeliveryMethod.ReliableOrdered, peer);
                     }
                     if (Players.ShouldRestartGame())
@@ -90,9 +90,9 @@ namespace BombermanOnline {
                     w.PutPowerID(id);
                     SendToAll(w, DeliveryMethod.ReliableOrdered, peer);
                     Players.AddPower(id, j);
-                } else if (p == NetClient.Packets.PLAYER_DIED) {
+                } else if (p == NetClient.Packets.PLAYER_HIT) {
                     var xy = _r.ReadVector2();
-                    var w = CreatePacket(Packets.PLAYER_DIED);
+                    var w = CreatePacket(Packets.PLAYER_HIT);
                     w.PutPlayerID(j);
                     w.Put(xy);
                     SendToAll(w, DeliveryMethod.ReliableOrdered, peer);
@@ -105,6 +105,11 @@ namespace BombermanOnline {
                 Players.Spawn(p);
                 _initialData.Clear(_initialDataStart); {
                     _initialData.PutPlayerID(p);
+                    _initialData.Put((byte)(G.Tiles.GetLength(0) - 1));
+                    _initialData.Put((byte)(G.Tiles.GetLength(1) - 1));
+                    for (var x = 0; x < G.Tiles.GetLength(0); x++)
+                        for (var y = 0; y < G.Tiles.GetLength(1); y++)
+                            _initialData.Put(0, Tile.MAX_ID, (int)G.Tiles[x, y].ID);
                     static void PutPlayer(int j) {
                         _initialData.PutPlayerID(j);
                         _initialData.Put(0, Players.FLAGS_COUNT, (int)Players.Flags[j]);
@@ -190,19 +195,54 @@ namespace BombermanOnline {
                         new Point(1, G.Tiles.GetLength(1) - 2),
                         new Point(G.Tiles.GetLength(0) - 2, G.Tiles.GetLength(1) - 2),
                     };
+                    var players = new Dictionary<Players.TEAMS, List<int>>();
                     foreach (var i in Players.TakenIDs) {
-                        var j = G.Rng.Next(spawns.Count);
-                        w.PutPlayerID(i);
-                        w.PutTileXY(spawns[j].X, spawns[j].Y);
-                        Players.XY[i] = new Vector2((spawns[j].X << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (spawns[j].Y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE);
-                        spawns.RemoveAt(j);
+                        if (!players.ContainsKey(Players.Team[i]))
+                            players.Add(Players.Team[i], new List<int> { i });
+                        else
+                            players[Players.Team[i]].Add(i);
                     }
+                    G.MakeMap(G.Tiles.GetLength(0), G.Tiles.GetLength(1));
+                    w.Put((byte)(G.Tiles.GetLength(0) - 1));
+                    w.Put((byte)(G.Tiles.GetLength(1) - 1));
+                    w.Put((byte)Players.TakenIDs.Count);
+                    foreach (var t in players.Keys) {
+                        getFreshSpawn : if (spawns.Count == 0) {
+                            spawns.Add(new Point(1, G.Tiles.GetLength(1) / 2));
+                            spawns.Add(new Point(G.Tiles.GetLength(0) - 2, G.Tiles.GetLength(1) / 2));
+                            for (var i = -1; i <= 1; i++) {
+                                G.Tiles[1, G.Tiles.GetLength(1) / 2 + i].ID = Tile.IDS.grass;
+                                G.Tiles[G.Tiles.GetLength(0) - 2, G.Tiles.GetLength(1) / 2 + i].ID = Tile.IDS.grass;
+                            }
+                            spawns.Add(new Point(G.Tiles.GetLength(0) / 2, 1));
+                            spawns.Add(new Point(G.Tiles.GetLength(0) / 2, G.Tiles.GetLength(1) - 2));
+                            for (var i = -1; i <= 1; i++) {
+                                G.Tiles[G.Tiles.GetLength(0) / 2 + i, 1].ID = Tile.IDS.grass;
+                                G.Tiles[G.Tiles.GetLength(0) / 2 + i, G.Tiles.GetLength(1) - 2].ID = Tile.IDS.grass;
+                            }
+                        }
+                        var j = G.Rng.Next(spawns.Count);
+                        var p = spawns[j];
+                        spawns.RemoveAt(j);
+                        for (var n = 0; n < players[t].Count; n++) {
+                            var i = players[t][n];
+                            // Console.WriteLine($"{i}--{p.X},{p.Y}");
+                            w.PutPlayerID(i);
+                            w.PutTileXY(p.X, p.Y);
+                            Players.XY[i] = new Vector2((p.X << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (p.Y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE);
+                            players[t].RemoveAt(n--);
+                            if (t == Players.TEAMS.FFA)
+                                goto getFreshSpawn;
+                        }
+                    }
+                    for (var x = 0; x < G.Tiles.GetLength(0); x++)
+                        for (var y = 0; y < G.Tiles.GetLength(1); y++)
+                            w.Put(0, Tile.MAX_ID, (int)G.Tiles[x, y].ID);
                     NetServer.SendToAll(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
                     Bombs.DespawnAll();
                     Powers.DespawnAll();
                     Anims.DespawnAll();
                     Players.ResetAll();
-                    G.MakeMap(G.Tiles.GetLength(0), G.Tiles.GetLength(1));
                 }
             }
         }
