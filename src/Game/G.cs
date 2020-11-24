@@ -16,6 +16,7 @@ namespace BombermanOnline {
         public static Rectangle RenderRect { get; private set; }
         public static Scr Scr { get; private set; }
         public static SpriteSheet Sprites { get; private set; }
+        public static SpriteSheet PlayerSprites { get; private set; }
         public static Tile[, ] Tiles { get; private set; }
         public static FastRng Rng { get; private set; }
 
@@ -27,6 +28,9 @@ namespace BombermanOnline {
                 new GamePadCondition(GamePadButton.Back, 0)
             );
         static readonly Dictionary<Type, Scr> _scr = new Dictionary<Type, Scr>();
+        static readonly Dictionary<PlayerColors, Texture2D> _players = new Dictionary<PlayerColors, Texture2D>();
+
+        static Color[] _playerSpritesTexture;
 
         public static void SetScr<T>()where T : Scr {
             Scr.Close();
@@ -72,6 +76,31 @@ namespace BombermanOnline {
                 default:
                     return false;
             }
+        }
+        public static Texture2D GetPlayer(PlayerColors colors) {
+            if (_players.TryGetValue(colors, out var texture))
+                return texture;
+            var darkBody = Color.Lerp(colors.Body, Color.Black, .5f);
+            var newPx = new Color[_playerSpritesTexture.Length];
+            Array.Copy(_playerSpritesTexture, newPx, _playerSpritesTexture.Length);
+            for (var i = 0; i < _playerSpritesTexture.Length; i++) {
+                if (_playerSpritesTexture[i].A == 0)
+                    continue;
+                if (_playerSpritesTexture[i].PackedValue == 4294967295)
+                    newPx[i] = colors.Body;
+                else if (_playerSpritesTexture[i].PackedValue == 4287926932)
+                    newPx[i] = darkBody;
+                else if (_playerSpritesTexture[i].PackedValue == 4279800575)
+                    newPx[i] = colors.Skin;
+                else if (_playerSpritesTexture[i].PackedValue == 4290576639)
+                    newPx[i] = colors.Accessories;
+                else if (_playerSpritesTexture[i].PackedValue == 4293356800)
+                    newPx[i] = colors.Clothes;
+            }
+            var newTexture = new Texture2D(_gfx.GraphicsDevice, PlayerSprites.Texture.Width, PlayerSprites.Texture.Height);
+            newTexture.SetData(newPx);
+            _players.Add(colors, newTexture);
+            return newTexture;
         }
 
         public G() {
@@ -127,6 +156,9 @@ namespace BombermanOnline {
             FMOD.Init(Content.RootDirectory);
             SpriteBatchExtensions.Init();
             Sprites = SpriteSheet.Load(Content.Load<Texture2D>("sprites"), "sprites.dat");
+            PlayerSprites = SpriteSheet.Load(Content.Load<Texture2D>("playersprites"), "playersprites.dat");
+            _playerSpritesTexture = new Color[PlayerSprites.Texture.Width * PlayerSprites.Texture.Height];
+            PlayerSprites.Texture.GetData(_playerSpritesTexture);
             Scr.Open();
         }
 

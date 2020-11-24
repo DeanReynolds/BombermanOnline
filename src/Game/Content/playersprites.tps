@@ -34,7 +34,7 @@
         <key>dataFormat</key>
         <string>monogame</string>
         <key>textureFileName</key>
-        <filename>sprites.png</filename>
+        <filename>playersprites.png</filename>
         <key>flipPVR</key>
         <false/>
         <key>pvrCompressionQuality</key>
@@ -137,7 +137,7 @@
             <key>datafile</key>
             <struct type="DataFile">
                 <key>name</key>
-                <filename>sprites.dat</filename>
+                <filename>playersprites.dat</filename>
             </struct>
         </map>
         <key>multiPack</key>
@@ -186,74 +186,17 @@
         </struct>
         <key>individualSpriteSettings</key>
         <map type="IndividualSpriteSettingsMap">
-            <key type="filename">sprites/+bomb_down.png</key>
-            <key type="filename">sprites/+bomb_kick.png</key>
-            <key type="filename">sprites/+bomb_pierce.png</key>
-            <key type="filename">sprites/+bomb_up.png</key>
-            <key type="filename">sprites/+fire_down.png</key>
-            <key type="filename">sprites/+fire_up.png</key>
-            <key type="filename">sprites/+full_fire.png</key>
-            <key type="filename">sprites/+geta.png</key>
-            <key type="filename">sprites/+power_bomb.png</key>
-            <key type="filename">sprites/+skate.png</key>
+            <key type="filename">sprites/p00.png</key>
+            <key type="filename">sprites/p01.png</key>
+            <key type="filename">sprites/p02.png</key>
+            <key type="filename">sprites/p11.png</key>
+            <key type="filename">sprites/p12.png</key>
+            <key type="filename">sprites/p20.png</key>
+            <key type="filename">sprites/p21.png</key>
+            <key type="filename">sprites/p22.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
-                <point_f>0.5,0.5</point_f>
-                <key>spriteScale</key>
-                <double>1</double>
-                <key>scale9Enabled</key>
-                <false/>
-                <key>scale9Borders</key>
-                <rect>8,8,16,16</rect>
-                <key>scale9Paddings</key>
-                <rect>8,8,16,16</rect>
-                <key>scale9FromFile</key>
-                <false/>
-            </struct>
-            <key type="filename">sprites/bomb.png</key>
-            <key type="filename">sprites/bomb_spiked.png</key>
-            <key type="filename">sprites/bound0.png</key>
-            <key type="filename">sprites/bound1.png</key>
-            <key type="filename">sprites/grass.png</key>
-            <key type="filename">sprites/wall.png</key>
-            <key type="filename">sprites/wallblown0.png</key>
-            <key type="filename">sprites/wallblown1.png</key>
-            <key type="filename">sprites/wallblown2.png</key>
-            <key type="filename">sprites/wallblown3.png</key>
-            <key type="filename">sprites/wallblown4.png</key>
-            <key type="filename">sprites/wallblown5.png</key>
-            <struct type="IndividualSpriteSettings">
-                <key>pivotPoint</key>
-                <point_f>0.5,0.5</point_f>
-                <key>spriteScale</key>
-                <double>1</double>
-                <key>scale9Enabled</key>
-                <false/>
-                <key>scale9Borders</key>
-                <rect>4,4,8,8</rect>
-                <key>scale9Paddings</key>
-                <rect>4,4,8,8</rect>
-                <key>scale9FromFile</key>
-                <false/>
-            </struct>
-            <key type="filename">sprites/ex00.png</key>
-            <key type="filename">sprites/ex01.png</key>
-            <key type="filename">sprites/ex02.png</key>
-            <key type="filename">sprites/ex03.png</key>
-            <key type="filename">sprites/ex04.png</key>
-            <key type="filename">sprites/ex10.png</key>
-            <key type="filename">sprites/ex11.png</key>
-            <key type="filename">sprites/ex12.png</key>
-            <key type="filename">sprites/ex13.png</key>
-            <key type="filename">sprites/ex14.png</key>
-            <key type="filename">sprites/ex20.png</key>
-            <key type="filename">sprites/ex21.png</key>
-            <key type="filename">sprites/ex22.png</key>
-            <key type="filename">sprites/ex23.png</key>
-            <key type="filename">sprites/ex24.png</key>
-            <struct type="IndividualSpriteSettings">
-                <key>pivotPoint</key>
-                <point_f>0.5,0.5</point_f>
+                <point_f>0.466667,0.727273</point_f>
                 <key>spriteScale</key>
                 <double>1</double>
                 <key>scale9Enabled</key>
@@ -265,85 +208,22 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">sprites/lb00.png</key>
-            <key type="filename">sprites/lb01.png</key>
-            <key type="filename">sprites/lb02.png</key>
-            <key type="filename">sprites/lb20.png</key>
-            <key type="filename">sprites/lb21.png</key>
-            <key type="filename">sprites/lb22.png</key>
-            <key type="filename">sprites/lbr00.png</key>
-            <key type="filename">sprites/lbr01.png</key>
-            <key type="filename">sprites/lbr02.png</key>
-            <key type="filename">sprites/lbr20.png</key>
-            <key type="filename">sprites/lbr21.png</key>
-            <key type="filename">sprites/lbr22.png</key>
-            <key type="filename">sprites/lg00.png</key>
-            <key type="filename">sprites/lg01.png</key>
-            <key type="filename">sprites/lg02.png</key>
-            <key type="filename">sprites/lg20.png</key>
-            <key type="filename">sprites/lg21.png</key>
-            <key type="filename">sprites/lg22.png</key>
-            <key type="filename">sprites/lp00.png</key>
-            <key type="filename">sprites/lp01.png</key>
-            <key type="filename">sprites/lp02.png</key>
-            <key type="filename">sprites/lp20.png</key>
-            <key type="filename">sprites/lp21.png</key>
-            <key type="filename">sprites/lp22.png</key>
+            <key type="filename">sprites/p10.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
-                <point_f>0.5,0.777778</point_f>
+                <point_f>0.611111,0.727273</point_f>
                 <key>spriteScale</key>
                 <double>1</double>
                 <key>scale9Enabled</key>
                 <false/>
                 <key>scale9Borders</key>
-                <rect>4,7,7,13</rect>
+                <rect>12,12,24,24</rect>
                 <key>scale9Paddings</key>
-                <rect>4,7,7,13</rect>
+                <rect>12,12,24,24</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">sprites/lb10.png</key>
-            <key type="filename">sprites/lbr10.png</key>
-            <key type="filename">sprites/lg10.png</key>
-            <key type="filename">sprites/lp10.png</key>
-            <struct type="IndividualSpriteSettings">
-                <key>pivotPoint</key>
-                <point_f>0.5,0.769231</point_f>
-                <key>spriteScale</key>
-                <double>1</double>
-                <key>scale9Enabled</key>
-                <false/>
-                <key>scale9Borders</key>
-                <rect>7,7,13,13</rect>
-                <key>scale9Paddings</key>
-                <rect>7,7,13,13</rect>
-                <key>scale9FromFile</key>
-                <false/>
-            </struct>
-            <key type="filename">sprites/lb11.png</key>
-            <key type="filename">sprites/lb12.png</key>
-            <key type="filename">sprites/lbr11.png</key>
-            <key type="filename">sprites/lbr12.png</key>
-            <key type="filename">sprites/lg11.png</key>
-            <key type="filename">sprites/lg12.png</key>
-            <key type="filename">sprites/lp11.png</key>
-            <key type="filename">sprites/lp12.png</key>
-            <struct type="IndividualSpriteSettings">
-                <key>pivotPoint</key>
-                <point_f>0.5,0.777778</point_f>
-                <key>spriteScale</key>
-                <double>1</double>
-                <key>scale9Enabled</key>
-                <false/>
-                <key>scale9Borders</key>
-                <rect>7,7,15,13</rect>
-                <key>scale9Paddings</key>
-                <rect>7,7,15,13</rect>
-                <key>scale9FromFile</key>
-                <false/>
-            </struct>
-            <key type="filename">sprites/ld0.png</key>
+            <key type="filename">sprites/pd0.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.8</point_f>
@@ -352,137 +232,131 @@
                 <key>scale9Enabled</key>
                 <false/>
                 <key>scale9Borders</key>
-                <rect>4,8,7,15</rect>
+                <rect>12,12,24,24</rect>
                 <key>scale9Paddings</key>
-                <rect>4,8,7,15</rect>
+                <rect>12,12,24,24</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">sprites/ld1.png</key>
+            <key type="filename">sprites/pd1.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
-                <point_f>0.5,0.807692</point_f>
+                <point_f>0.5,0.842105</point_f>
                 <key>spriteScale</key>
                 <double>1</double>
                 <key>scale9Enabled</key>
                 <false/>
                 <key>scale9Borders</key>
-                <rect>4,7,7,13</rect>
+                <rect>12,12,24,24</rect>
                 <key>scale9Paddings</key>
-                <rect>4,7,7,13</rect>
+                <rect>12,12,24,24</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">sprites/ld2.png</key>
+            <key type="filename">sprites/pd2.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
-                <point_f>0.5,0.818182</point_f>
+                <point_f>0.5,0.761905</point_f>
                 <key>spriteScale</key>
                 <double>1</double>
                 <key>scale9Enabled</key>
                 <false/>
                 <key>scale9Borders</key>
-                <rect>3,6,5,11</rect>
+                <rect>12,12,24,24</rect>
                 <key>scale9Paddings</key>
-                <rect>3,6,5,11</rect>
+                <rect>12,12,24,24</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
-            <key type="filename">sprites/ld3.png</key>
+            <key type="filename">sprites/pm00.png</key>
+            <key type="filename">sprites/pm01.png</key>
+            <key type="filename">sprites/pm02.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
-                <point_f>0.5,0.823529</point_f>
+                <point_f>0.466667,1.25</point_f>
                 <key>spriteScale</key>
                 <double>1</double>
                 <key>scale9Enabled</key>
                 <false/>
                 <key>scale9Borders</key>
-                <rect>2,4,3,9</rect>
+                <rect>12,12,24,24</rect>
                 <key>scale9Paddings</key>
-                <rect>2,4,3,9</rect>
+                <rect>12,12,24,24</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">sprites/pm10.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.823529,1.25</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>12,12,24,24</rect>
+                <key>scale9Paddings</key>
+                <rect>12,12,24,24</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">sprites/pm11.png</key>
+            <key type="filename">sprites/pm12.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.823529,1.19048</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>12,12,24,24</rect>
+                <key>scale9Paddings</key>
+                <rect>12,12,24,24</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
+            <key type="filename">sprites/pm20.png</key>
+            <key type="filename">sprites/pm21.png</key>
+            <key type="filename">sprites/pm22.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.466667,1.35</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>12,12,24,24</rect>
+                <key>scale9Paddings</key>
+                <rect>12,12,24,24</rect>
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
         </map>
         <key>fileList</key>
         <array>
-            <filename>sprites/bomb.png</filename>
-            <filename>sprites/bound0.png</filename>
-            <filename>sprites/bound1.png</filename>
-            <filename>sprites/grass.png</filename>
-            <filename>sprites/wall.png</filename>
-            <filename>sprites/wallblown0.png</filename>
-            <filename>sprites/wallblown1.png</filename>
-            <filename>sprites/wallblown2.png</filename>
-            <filename>sprites/wallblown3.png</filename>
-            <filename>sprites/wallblown4.png</filename>
-            <filename>sprites/wallblown5.png</filename>
-            <filename>sprites/+bomb_down.png</filename>
-            <filename>sprites/+bomb_kick.png</filename>
-            <filename>sprites/+bomb_pierce.png</filename>
-            <filename>sprites/+bomb_up.png</filename>
-            <filename>sprites/+fire_down.png</filename>
-            <filename>sprites/+fire_up.png</filename>
-            <filename>sprites/+full_fire.png</filename>
-            <filename>sprites/+geta.png</filename>
-            <filename>sprites/+skate.png</filename>
-            <filename>sprites/+power_bomb.png</filename>
-            <filename>sprites/ex00.png</filename>
-            <filename>sprites/ex01.png</filename>
-            <filename>sprites/ex02.png</filename>
-            <filename>sprites/ex03.png</filename>
-            <filename>sprites/ex04.png</filename>
-            <filename>sprites/ex10.png</filename>
-            <filename>sprites/ex11.png</filename>
-            <filename>sprites/ex12.png</filename>
-            <filename>sprites/ex13.png</filename>
-            <filename>sprites/ex14.png</filename>
-            <filename>sprites/ex20.png</filename>
-            <filename>sprites/ex21.png</filename>
-            <filename>sprites/ex22.png</filename>
-            <filename>sprites/ex23.png</filename>
-            <filename>sprites/ex24.png</filename>
-            <filename>sprites/bomb_spiked.png</filename>
-            <filename>sprites/lg00.png</filename>
-            <filename>sprites/lg01.png</filename>
-            <filename>sprites/lg02.png</filename>
-            <filename>sprites/lg10.png</filename>
-            <filename>sprites/lg11.png</filename>
-            <filename>sprites/lg12.png</filename>
-            <filename>sprites/lg20.png</filename>
-            <filename>sprites/lg21.png</filename>
-            <filename>sprites/lg22.png</filename>
-            <filename>sprites/lb00.png</filename>
-            <filename>sprites/lb01.png</filename>
-            <filename>sprites/lb02.png</filename>
-            <filename>sprites/lb10.png</filename>
-            <filename>sprites/lb11.png</filename>
-            <filename>sprites/lb12.png</filename>
-            <filename>sprites/lb20.png</filename>
-            <filename>sprites/lb21.png</filename>
-            <filename>sprites/ld0.png</filename>
-            <filename>sprites/ld1.png</filename>
-            <filename>sprites/ld2.png</filename>
-            <filename>sprites/ld3.png</filename>
-            <filename>sprites/lb22.png</filename>
-            <filename>sprites/lp00.png</filename>
-            <filename>sprites/lp01.png</filename>
-            <filename>sprites/lp02.png</filename>
-            <filename>sprites/lp10.png</filename>
-            <filename>sprites/lp11.png</filename>
-            <filename>sprites/lp12.png</filename>
-            <filename>sprites/lp20.png</filename>
-            <filename>sprites/lp21.png</filename>
-            <filename>sprites/lp22.png</filename>
-            <filename>sprites/lbr00.png</filename>
-            <filename>sprites/lbr01.png</filename>
-            <filename>sprites/lbr02.png</filename>
-            <filename>sprites/lbr10.png</filename>
-            <filename>sprites/lbr11.png</filename>
-            <filename>sprites/lbr12.png</filename>
-            <filename>sprites/lbr20.png</filename>
-            <filename>sprites/lbr21.png</filename>
-            <filename>sprites/lbr22.png</filename>
+            <filename>sprites/p00.png</filename>
+            <filename>sprites/p01.png</filename>
+            <filename>sprites/p02.png</filename>
+            <filename>sprites/p10.png</filename>
+            <filename>sprites/p11.png</filename>
+            <filename>sprites/p12.png</filename>
+            <filename>sprites/p20.png</filename>
+            <filename>sprites/p21.png</filename>
+            <filename>sprites/p22.png</filename>
+            <filename>sprites/pd0.png</filename>
+            <filename>sprites/pd1.png</filename>
+            <filename>sprites/pd2.png</filename>
+            <filename>sprites/pm00.png</filename>
+            <filename>sprites/pm01.png</filename>
+            <filename>sprites/pm02.png</filename>
+            <filename>sprites/pm10.png</filename>
+            <filename>sprites/pm11.png</filename>
+            <filename>sprites/pm12.png</filename>
+            <filename>sprites/pm20.png</filename>
+            <filename>sprites/pm21.png</filename>
+            <filename>sprites/pm22.png</filename>
         </array>
         <key>ignoreFileList</key>
         <array/>

@@ -26,6 +26,12 @@ namespace BombermanOnline {
         public SpriteAnim[] MoveDir;
         public SpriteAnim Death;
     }
+    struct PlayerColors {
+        public Color Body;
+        public Color Skin;
+        public Color Accessories;
+        public Color Clothes;
+    }
     static class Players {
         public const int HITBOX_WIDTH = 14,
             HITBOX_HEIGHT = 11;
@@ -42,6 +48,7 @@ namespace BombermanOnline {
         public static PlayerStats[] Stats { get; private set; }
         public static TEAMS[] Team { get; private set; }
         public static LouieAnims[] Louie { get; private set; }
+        public static PlayerColors[] Colors { get; private set; }
 
         public static readonly HashSet<int> TakenIDs = new HashSet<int>();
 
@@ -76,18 +83,19 @@ namespace BombermanOnline {
             Stats = new PlayerStats[capacity];
             Team = new TEAMS[capacity];
             Louie = new LouieAnims[capacity];
+            Colors = new PlayerColors[capacity];
             TakenIDs.Clear();
             _freeIDs.Clear();
             for (int i = 0; i < capacity; i++)
                 _freeIDs.AddLast(i);
             var s = new [] {
-                G.Sprites["p00"], G.Sprites["p01"], G.Sprites["p02"],
-                G.Sprites["p10"], G.Sprites["p11"], G.Sprites["p12"],
-                G.Sprites["p20"], G.Sprites["p21"], G.Sprites["p22"],
-                G.Sprites["pm00"], G.Sprites["pm01"], G.Sprites["pm02"],
-                G.Sprites["pm10"], G.Sprites["pm11"], G.Sprites["pm12"],
-                G.Sprites["pm20"], G.Sprites["pm21"], G.Sprites["pm22"],
-                G.Sprites["p20"], G.Sprites["pd0"], G.Sprites["pd1"], G.Sprites["pd2"],
+                G.PlayerSprites["p00"], G.PlayerSprites["p01"], G.PlayerSprites["p02"],
+                G.PlayerSprites["p10"], G.PlayerSprites["p11"], G.PlayerSprites["p12"],
+                G.PlayerSprites["p20"], G.PlayerSprites["p21"], G.PlayerSprites["p22"],
+                G.PlayerSprites["pm00"], G.PlayerSprites["pm01"], G.PlayerSprites["pm02"],
+                G.PlayerSprites["pm10"], G.PlayerSprites["pm11"], G.PlayerSprites["pm12"],
+                G.PlayerSprites["pm20"], G.PlayerSprites["pm21"], G.PlayerSprites["pm22"],
+                G.PlayerSprites["p20"], G.PlayerSprites["pd0"], G.PlayerSprites["pd1"], G.PlayerSprites["pd2"],
                 G.Sprites["lg00"], G.Sprites["lg01"], G.Sprites["lg02"],
                 G.Sprites["lg10"], G.Sprites["lg11"], G.Sprites["lg12"],
                 G.Sprites["lg20"], G.Sprites["lg21"], G.Sprites["lg22"],
@@ -426,22 +434,23 @@ namespace BombermanOnline {
                     // var hb = new Rectangle((int)(XY[i].X - (HITBOX_WIDTH >> 1)), (int)(XY[i].Y - (HITBOX_HEIGHT >> 1)), HITBOX_WIDTH, HITBOX_HEIGHT);
                     // G.SB.FillRectangle(hb, Color.Blue);
                     var xy = XY[i].ToPoint().ToVector2();
+                    var t = G.GetPlayer(Colors[i]);
                     if (Flags[i].HasFlag(FLAGS.HAS_LOUIE)) {
                         anim = Anim[i].MountedMoveDir[(int)Dir[i]];
                         s = anim.Frames[anim.Frame];
                         louieAnim = Louie[i].MoveDir[(int)Dir[i]];
                         louieS = louieAnim.Frames[louieAnim.Frame];
                         if (Dir[i] == DIR.SOUTH) {
-                            G.SB.Draw(G.Sprites.Texture, xy, s.Source, Color.White, anim.Rotation, s.Origin, 1, anim.Effects, 0);
+                            G.SB.Draw(t, xy, s.Source, Color.White, anim.Rotation, s.Origin, 1, anim.Effects, 0);
                             G.SB.Draw(G.Sprites.Texture, xy, louieS.Source, Color.White, louieAnim.Rotation, louieS.Origin, 1, louieAnim.Effects, 0);
                         } else {
                             G.SB.Draw(G.Sprites.Texture, xy, louieS.Source, Color.White, louieAnim.Rotation, louieS.Origin, 1, louieAnim.Effects, 0);
-                            G.SB.Draw(G.Sprites.Texture, xy, s.Source, Color.White, anim.Rotation, s.Origin, 1, anim.Effects, 0);
+                            G.SB.Draw(t, xy, s.Source, Color.White, anim.Rotation, s.Origin, 1, anim.Effects, 0);
                         }
                     } else {
                         anim = Anim[i].MoveDir[(int)Dir[i]];
                         s = anim.Frames[anim.Frame];
-                        G.SB.Draw(G.Sprites.Texture, xy, s.Source, Color.White, anim.Rotation, s.Origin, 1, anim.Effects, 0);
+                        G.SB.Draw(t, xy, s.Source, Color.White, anim.Rotation, s.Origin, 1, anim.Effects, 0);
                     }
                 }
         }
@@ -456,6 +465,12 @@ namespace BombermanOnline {
             if (Flags[i].HasFlag(FLAGS.IS_DEAD))
                 _playersAlive[Team[i]]++;
             Flags[i] = 0;
+            Colors[i] = new PlayerColors {
+                Body = new Color(255, 255, 255),
+                Skin = new Color(255, 146, 24),
+                Accessories = new Color(255, 0, 189),
+                Clothes = new Color(0, 109, 231)
+            };
         }
         public static void ResetAll() {
             foreach (var i in TakenIDs)
