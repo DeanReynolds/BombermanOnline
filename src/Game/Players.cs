@@ -198,11 +198,11 @@ namespace BombermanOnline {
         public static bool Kill(int i) {
             if (Flags[i].HasFlag(FLAGS.HAS_LOUIE)) {
                 Flags[i] &= ~FLAGS.HAS_LOUIE;
-                Anims.Spawn(XY[i], LAGreen.Death);
+                Anims.Spawn(XY[i], LAGreen.Death, G.Sprites.Texture);
                 return false;
             } else {
                 Flags[i] |= FLAGS.IS_DEAD;
-                Anims.Spawn(XY[i], Anim[i].Death);
+                Anims.Spawn(XY[i], Anim[i].Death, G.PlayerSprites.Texture);
                 _playersAlive[Team[i]]--;
                 if (NetServer.IsRunning) {
                     // Console.WriteLine($@"{NetServer.RestartGameInTime <= 0},{ShouldRestartGame()}");

@@ -157,7 +157,7 @@ namespace BombermanOnline {
                         anim = ExplosionVert;
                         break;
                 }
-                Anims.Spawn(xy, anim);
+                Anims.Spawn(xy, anim, G.Sprites.Texture);
             }
             static Powers.IDS SpawnPower(int x, int y) {
                 if (NetClient.IsRunning)
@@ -184,7 +184,7 @@ namespace BombermanOnline {
                                 Explode(k);
                         } else if (G.Tiles[x, ry].ID == Tile.IDS.wall) {
                             G.Tiles[x, ry].ID = Tile.IDS.grass;
-                            Anims.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (ry << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
+                            Anims.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (ry << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion, G.Sprites.Texture);
                             SpawnPower(x, ry);
                             continueUp = false;
                         } else if (G.IsTileSolid(x, ry))
@@ -202,7 +202,7 @@ namespace BombermanOnline {
                                 Explode(k);
                         } else if (G.Tiles[rx, y].ID == Tile.IDS.wall) {
                             G.Tiles[rx, y].ID = Tile.IDS.grass;
-                            Anims.Spawn(new Vector2((rx << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
+                            Anims.Spawn(new Vector2((rx << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion, G.Sprites.Texture);
                             SpawnPower(rx, y);
                             continueRight = false;
                         } else if (G.IsTileSolid(rx, y))
@@ -220,7 +220,7 @@ namespace BombermanOnline {
                                 Explode(k);
                         } else if (G.Tiles[x, ry].ID == Tile.IDS.wall) {
                             G.Tiles[x, ry].ID = Tile.IDS.grass;
-                            Anims.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (ry << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
+                            Anims.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (ry << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion, G.Sprites.Texture);
                             SpawnPower(x, ry);
                             continueDown = false;
                         } else if (G.IsTileSolid(x, ry))
@@ -238,7 +238,7 @@ namespace BombermanOnline {
                                 Explode(k);
                         } else if (G.Tiles[rx, y].ID == Tile.IDS.wall) {
                             G.Tiles[rx, y].ID = Tile.IDS.grass;
-                            Anims.Spawn(new Vector2((rx << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion);
+                            Anims.Spawn(new Vector2((rx << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion, G.Sprites.Texture);
                             SpawnPower(rx, y);
                             continueLeft = false;
                         } else if (G.IsTileSolid(rx, y))
