@@ -6,6 +6,21 @@ namespace BombermanOnline {
         public const int HITBOX_WIDTH = 12,
             HITBOX_HEIGHT = 12;
         public static readonly int MAX_IDS = Enum.GetValues(typeof(IDS)).Length;
+        public static readonly(IDS Power, float Weight)[] SPAWN = new [] {
+            (IDS.FIRE_UP, 4),
+            (IDS.BOMB_UP, 4),
+            (IDS.FULL_FIRE, 1),
+            (IDS.FIRE_DOWN, 2),
+            (IDS.BOMB_DOWN, 2),
+            (IDS.SKATE, 3),
+            (IDS.GETA, 3f),
+        };
+        public static readonly float TOTAL_SPAWN_WEIGHT;
+
+        static Powers() {
+            for (var i = 0; i < SPAWN.Length; i++)
+                TOTAL_SPAWN_WEIGHT += SPAWN[i].Weight;
+        }
 
         public static int Count { get; private set; }
         public static Vector2[] XY { get; private set; }

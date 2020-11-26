@@ -7,16 +7,26 @@ namespace BombermanOnline {
     sealed class GameScr : Scr {
         public static Camera Camera;
         public static RenderTarget2D GameTexture;
+        public static FMOD.SoundChannel Theme;
+        public static FMOD.Sound Explode;
 
         public override void Open() {
             int w = G.Tiles.GetLength(0) << Tile.BITS_PER_SIZE,
                 h = G.Tiles.GetLength(1) << Tile.BITS_PER_SIZE;
             GameTexture = new RenderTarget2D(G.SB.GraphicsDevice, w, h);
             Camera = new Camera(new Vector2(w >> 1, h >> 1), (w, h));
+            Theme = FMOD.LoadStreamedSound("theme.ogg").Play();
+            Theme.Looping = true;
+            Explode = FMOD.LoadSound("expl.ogg");
         }
         public override void Close() {
             Camera.Dispose();
             Camera = null;
+            Theme.Stop();
+            Theme.Sound.Unload();
+            Theme = null;
+            Explode.Unload();
+            Explode = null;
         }
 
         public override void Update() {

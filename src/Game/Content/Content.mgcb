@@ -13,6 +13,9 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin expl.ogg
+/copy:expl.ogg
+
 #begin playersprites.dat
 /copy:playersprites.dat
 
@@ -42,4 +45,7 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:sprites.png
+
+#begin theme.ogg
+/copy:theme.ogg
 

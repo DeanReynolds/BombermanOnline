@@ -160,9 +160,14 @@ namespace BombermanOnline {
                 Anims.Spawn(xy, anim, G.Sprites.Texture);
             }
             static Powers.IDS SpawnPower(int x, int y) {
-                if (NetClient.IsRunning)
+                if (NetClient.IsRunning || G.Rng.NextFloat() >.7f)
                     return 0;
-                var power = G.Rng.NextValue(Powers.IDS.FIRE_UP, Powers.IDS.FIRE_DOWN, Powers.IDS.BOMB_UP, Powers.IDS.BOMB_DOWN, Powers.IDS.SKATE, Powers.IDS.GETA);
+                var pick = G.Rng.NextFloat(Powers.TOTAL_SPAWN_WEIGHT);
+                var i = 0;
+                var weight = Powers.SPAWN[0].Weight;
+                while (pick > weight && i < Powers.SPAWN.Length - 1)
+                    weight += Powers.SPAWN[++i].Weight;
+                var power = Powers.SPAWN[i].Power;
                 _powersSpawned[_powersSpawnedCount++] = (x, y, power);
                 Powers.Spawn(x, y, power);
                 return power;
@@ -251,6 +256,7 @@ namespace BombermanOnline {
                 }
             SpawnExplosion(x, y, EXPLOSION_DIR.INTERSECTION);
             Players.TryKillAt(x, y);
+            GameScr.Explode.Play();
             TimeLeft[i] = 0;
         }
     }
