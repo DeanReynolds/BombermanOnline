@@ -255,19 +255,19 @@ namespace BombermanOnline {
                         Input[LocalID] |= INPUT.MOV_LEFT;
                 } else if (KeyboardCondition.Held(Keys.D))
                     Input[LocalID] |= INPUT.MOV_RIGHT;
-                if (KeyboardCondition.Pressed(Keys.U)) {
-                    Louie[LocalID] = LAGreen;
-                    Flags[LocalID] ^= FLAGS.HAS_LOUIE;
-                } else if (KeyboardCondition.Pressed(Keys.I)) {
-                    Louie[LocalID] = LABlue;
-                    Flags[LocalID] ^= FLAGS.HAS_LOUIE;
-                } else if (KeyboardCondition.Pressed(Keys.O)) {
-                    Louie[LocalID] = LABrown;
-                    Flags[LocalID] ^= FLAGS.HAS_LOUIE;
-                } else if (KeyboardCondition.Pressed(Keys.P)) {
-                    Louie[LocalID] = LAPink;
-                    Flags[LocalID] ^= FLAGS.HAS_LOUIE;
-                }
+                // if (KeyboardCondition.Pressed(Keys.U)) {
+                //     Louie[LocalID] = LAGreen;
+                //     Flags[LocalID] ^= FLAGS.HAS_LOUIE;
+                // } else if (KeyboardCondition.Pressed(Keys.I)) {
+                //     Louie[LocalID] = LABlue;
+                //     Flags[LocalID] ^= FLAGS.HAS_LOUIE;
+                // } else if (KeyboardCondition.Pressed(Keys.O)) {
+                //     Louie[LocalID] = LABrown;
+                //     Flags[LocalID] ^= FLAGS.HAS_LOUIE;
+                // } else if (KeyboardCondition.Pressed(Keys.P)) {
+                //     Louie[LocalID] = LAPink;
+                //     Flags[LocalID] ^= FLAGS.HAS_LOUIE;
+                // }
                 if ((KeyboardCondition.Held(Keys.Space) || KeyboardCondition.Held(Keys.Enter)) && Stats[LocalID].BombsInPlay < Stats[LocalID].MaxBombs) {
                     int x = (int)XY[LocalID].X >> Tile.BITS_PER_SIZE,
                         y = (int)XY[LocalID].Y >> Tile.BITS_PER_SIZE;
@@ -501,6 +501,28 @@ namespace BombermanOnline {
                     break;
                 case Powers.IDS.GETA:
                     Stats[player].Speed = (sbyte)Math.Max(Stats[player].Speed - 1, PlayerStats.MIN_SPEED);
+                    break;
+                case Powers.IDS.BOMB_PIERCE:
+                    Flags[player] |= FLAGS.BOMBS_CAN_PIERCE;
+                    break;
+                case Powers.IDS.BOMB_PIERCE_DOWN:
+                    Flags[player] &= ~FLAGS.BOMBS_CAN_PIERCE;
+                    break;
+                case Powers.IDS.GREEN_LOUIE:
+                    Louie[player] = LAGreen;
+                    Flags[player] |= FLAGS.HAS_LOUIE;
+                    break;
+                case Powers.IDS.PINK_LOUIE:
+                    Louie[player] = LAPink;
+                    Flags[player] |= FLAGS.HAS_LOUIE;
+                    break;
+                case Powers.IDS.BLUE_LOUIE:
+                    Louie[player] = LABlue;
+                    Flags[player] |= FLAGS.HAS_LOUIE;
+                    break;
+                case Powers.IDS.BROWN_LOUIE:
+                    Louie[player] = LABrown;
+                    Flags[player] |= FLAGS.HAS_LOUIE;
                     break;
             }
         }

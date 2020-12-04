@@ -30,17 +30,21 @@ namespace BombermanOnline {
         }
 
         public override void Update() {
+            for (var y = 0; y < G.Tiles.GetLength(1); y++)
+                for (var x = 0; x < G.Tiles.GetLength(0); x++)
+                    G.Tiles[x, y].Anim.Update();
             Players.Update();
             Powers.Update();
             Anims.Update();
             Bombs.Update();
         }
         public override void Draw() {
-            G.SB.Begin(samplerState: SamplerState.PointClamp, transformMatrix: Camera.View(0));
+            G.SB.Begin(SpriteSortMode.BackToFront, samplerState : SamplerState.PointClamp, transformMatrix : Camera.View(0));
             for (var y = 0; y < G.Tiles.GetLength(1); y++)
                 for (var x = 0; x < G.Tiles.GetLength(0); x++) {
-                    var sprite = G.Sprites[G.Tiles[x, y].ID.ToString()];
-                    G.SB.Draw(G.Sprites.Texture, new Rectangle(x << Tile.BITS_PER_SIZE, y << Tile.BITS_PER_SIZE, Tile.SIZE, Tile.SIZE), sprite.Source, Color.White, 0, Vector2.Zero, 0, 0);
+                    var anim = G.Tiles[x, y].Anim;
+                    var sprite = anim.Frames[anim.Frame];
+                    G.SB.Draw(G.Sprites.Texture, new Rectangle(x << Tile.BITS_PER_SIZE, y << Tile.BITS_PER_SIZE, Tile.SIZE, Tile.SIZE), sprite.Source, anim.Tint, 0, Vector2.Zero, 0, anim.Layer);
                 }
             Powers.Draw();
             Bombs.Draw();

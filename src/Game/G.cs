@@ -10,6 +10,8 @@ using Microsoft.Xna.Framework.Input;
 
 namespace BombermanOnline {
     sealed class G : Game {
+        public static readonly int MAX_MAP_ID = Enum.GetValues(typeof(MAP_IDS)).Length - 1;
+
         public static new ContentManager Content { get; private set; }
         public static SpriteBatch SB { get; private set; }
         public static Viewport Viewport { get; private set; }
@@ -18,6 +20,7 @@ namespace BombermanOnline {
         public static SpriteSheet Sprites { get; private set; }
         public static SpriteSheet PlayerSprites { get; private set; }
         public static Tile[, ] Tiles { get; private set; }
+        public static MAP_IDS MapId { get; private set; }
         public static FastRng Rng { get; private set; }
 
         static GraphicsDeviceManager _gfx;
@@ -38,40 +41,149 @@ namespace BombermanOnline {
             Scr.Open();
         }
 
-        public static void MakeMap(int width, int height) {
+        public static void MakeMap(int width, int height, MAP_IDS id) {
             Tiles = new Tile[width, height];
-            for (var y = 1; y < height - 1; y++)
-                for (var x = 1; x < width - 1; x++)
-                    Tiles[x, y].ID = Tile.IDS.wall;
-            for (var y = 1; y < 3; y++)
-                for (var x = 1; x < 3; x++)
-                    Tiles[x, y].ID = Tile.IDS.grass;
-            for (var y = 1; y < 3; y++)
-                for (var x = 1; x < 3; x++)
-                    Tiles[width - 1 - x, y].ID = Tile.IDS.grass;
-            for (var y = 1; y < 3; y++)
-                for (var x = 1; x < 3; x++)
-                    Tiles[x, height - 1 - y].ID = Tile.IDS.grass;
-            for (var y = 1; y < 3; y++)
-                for (var x = 1; x < 3; x++)
-                    Tiles[width - 1 - x, height - 1 - y].ID = Tile.IDS.grass;
-            for (var y = 0; y < height; y++) {
-                Tiles[0, y].ID = Tile.IDS.bound0;
-                Tiles[width - 1, y].ID = Tile.IDS.bound0;
+            MapId = id;
+            SpriteAnim anim;
+            switch (id) {
+                case MAP_IDS.GRASSLAND:
+                    for (var y = 1; y < height - 1; y++) {
+                        anim = new SpriteAnim(false, 0, 0, 1, 0, Sprites["s0floor"]);
+                        anim.Layer = .9f;
+                        anim.FinishMode = SpriteAnim.FINISH_MODE.NO_SCALE;
+                        for (var x = 1; x < width - 1; x++) {
+                            SetTile(x, y, Tile.IDS.wall);
+                            Anims.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), anim, Sprites.Texture);
+                        }
+                    }
+                    for (var y = 1; y < 3; y++)
+                        for (var x = 1; x < 3; x++) {
+                            SetTile(x, y, Tile.IDS.floor);
+                            SetTile(width - 1 - x, y, Tile.IDS.floor);
+                            SetTile(x, height - 1 - y, Tile.IDS.floor);
+                            SetTile(width - 1 - x, height - 1 - y, Tile.IDS.floor);
+                        }
+                    for (var y = 0; y < height; y++) {
+                        SetTile(0, y, Tile.IDS.bound);
+                        SetTile(width - 1, y, Tile.IDS.bound);
+                    }
+                    for (var x = 1; x < width - 1; x++) {
+                        SetTile(x, 0, Tile.IDS.bound);
+                        SetTile(x, height - 1, Tile.IDS.bound);
+                    }
+                    for (var y = 2; y < height - 2; y += 2)
+                        for (var x = 2; x < width - 2; x += 2) {
+                            SetTile(x, y, Tile.IDS.bound);
+                            Tiles[x, y].Anim = new SpriteAnim(false, 0, 0, 1, 0, Sprites["s0solid"]);
+                        }
+                    break;
+                case MAP_IDS.SHALLOW_SEA:
+                    for (var y = 1; y < height - 1; y++) {
+                        if (y % 2 == 1)
+                            anim = new SpriteAnim(false, 0, 0, 1, 0, Sprites["s1floor1"]);
+                        else
+                            anim = new SpriteAnim(false, 0, 0, 1, 0, Sprites["s1floor2"]);
+                        anim.Tint = Color.Lerp(Color.Blue, Color.White, y / (float)Tiles.GetLength(1) * .33f + .66f);
+                        anim.Layer = .9f;
+                        anim.FinishMode = SpriteAnim.FINISH_MODE.NO_SCALE;
+                        for (var x = 1; x < width - 1; x++) {
+                            SetTile(x, y, Tile.IDS.wall);
+                            Anims.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), anim, Sprites.Texture);
+                        }
+                    }
+                    for (var y = 1; y < 3; y++)
+                        for (var x = 1; x < 3; x++) {
+                            SetTile(x, y, Tile.IDS.floor);
+                            SetTile(width - 1 - x, y, Tile.IDS.floor);
+                            SetTile(x, height - 1 - y, Tile.IDS.floor);
+                            SetTile(width - 1 - x, height - 1 - y, Tile.IDS.floor);
+                        }
+                    for (var y = 0; y < height; y++) {
+                        SetTile(0, y, Tile.IDS.bound);
+                        SetTile(width - 1, y, Tile.IDS.bound);
+                    }
+                    for (var x = 1; x < width - 1; x++) {
+                        SetTile(x, 0, Tile.IDS.bound);
+                        SetTile(x, height - 1, Tile.IDS.bound);
+                    }
+                    for (var y = 2; y < height - 2; y += 2)
+                        for (var x = 2; x < width - 2; x += 2) {
+                            SetTile(x, y, Tile.IDS.bound);
+                            Tiles[x, y].Anim = new SpriteAnim(false, 0, 0, 1, 0, Sprites["s1solid"]);
+                        }
+                    break;
+                case MAP_IDS.SNOWY_DEPTHS:
+                    for (var y = 1; y < height - 1; y++) {
+                        for (var x = 1; x < width - 1; x++) {
+                            if (x % 2 == 1)
+                                anim = new SpriteAnim(false, 0, 0, 1, 0, Sprites["s3floor1"]);
+                            else
+                                anim = new SpriteAnim(false, 0, 0, 1, 0, Sprites["s3floor2"]);
+                            anim.Layer = .9f;
+                            anim.FinishMode = SpriteAnim.FINISH_MODE.NO_SCALE;
+                            SetTile(x, y, Tile.IDS.wall);
+                            Anims.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), anim, Sprites.Texture);
+                        }
+                    }
+                    for (var y = 1; y < 3; y++)
+                        for (var x = 1; x < 3; x++) {
+                            SetTile(x, y, Tile.IDS.floor);
+                            SetTile(width - 1 - x, y, Tile.IDS.floor);
+                            SetTile(x, height - 1 - y, Tile.IDS.floor);
+                            SetTile(width - 1 - x, height - 1 - y, Tile.IDS.floor);
+                        }
+                    for (var y = 0; y < height; y++) {
+                        SetTile(0, y, Tile.IDS.bound);
+                        SetTile(width - 1, y, Tile.IDS.bound);
+                    }
+                    for (var x = 1; x < width - 1; x++) {
+                        SetTile(x, 0, Tile.IDS.bound);
+                        SetTile(x, height - 1, Tile.IDS.bound);
+                    }
+                    for (var y = 2; y < height - 2; y += 2)
+                        for (var x = 2; x < width - 2; x += 2) {
+                            SetTile(x, y, Tile.IDS.bound);
+                            Tiles[x, y].Anim = new SpriteAnim(false, 0, 0, 1, 0, Sprites["s3solid"]);
+                        }
+                    break;
             }
-            for (var x = 1; x < width - 1; x++) {
-                Tiles[x, 0].ID = Tile.IDS.bound0;
-                Tiles[x, height - 1].ID = Tile.IDS.bound0;
+        }
+        public static void SetTile(int x, int y, Tile.IDS id) {
+            SpriteAnim anim;
+            switch (id) {
+                default:
+                    case Tile.IDS.floor:
+                    anim = new SpriteAnim(false, 0, 0, 1, 0, Sprites["s0floor"]);
+                anim.Tint = Color.White * 0f;
+                break;
+                case Tile.IDS.wall:
+                        switch (MapId) {
+                        default:
+                            case MAP_IDS.GRASSLAND:
+                            anim = new SpriteAnim(false, 0, 0, 1, 0, Sprites["s0destruct"]);
+                        break;
+                        case MAP_IDS.SHALLOW_SEA:
+                                anim = new SpriteAnim(true, .5f, 0, 1, 0, Sprites["s1destruct0"], Sprites["s1destruct1"], Sprites["s1destruct2"]);
+                            break;
+                        case MAP_IDS.SNOWY_DEPTHS:
+                                anim = new SpriteAnim(true, .5f, 0, 1, 0, Sprites["s3destruct"]);
+                            break;
+                    }
+                    break;
+                case Tile.IDS.bound:
+                        anim = new SpriteAnim(false, 0, 0, 1, 0, Sprites["s0bound"]);
+                    break;
             }
-            for (var y = 2; y < height - 2; y += 2)
-                for (var x = 2; x < width - 2; x += 2)
-                    Tiles[x, y].ID = Tile.IDS.bound0;
+            anim.Layer = .5f;
+            Tiles[x, y] = new Tile {
+                ID = id,
+                Anim = anim
+            };
         }
         public static bool IsTileSolid(int x, int y) {
             switch (Tiles[x, y].ID) {
                 case Tile.IDS.wall:
-                case Tile.IDS.bound0:
-                case Tile.IDS.bound1:
+                case Tile.IDS.bound:
                     return true;
                 default:
                     return false;
@@ -102,6 +214,8 @@ namespace BombermanOnline {
             _players.Add(colors, newTexture);
             return newTexture;
         }
+
+        public enum MAP_IDS { GRASSLAND, SHALLOW_SEA, SNOWY_DEPTHS }
 
         public G() {
             _gfx = new GraphicsDeviceManager(this) {
@@ -146,7 +260,7 @@ namespace BombermanOnline {
             Window.ClientSizeChanged += OnScreenSizeChange;
             OnScreenSizeChange(null, null);
             Bombs.Init(100);
-            Anims.Init(375);
+            Anims.Init(800);
             Powers.Init(200);
         }
 

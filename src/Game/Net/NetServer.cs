@@ -107,8 +107,9 @@ namespace BombermanOnline {
                     _initialData.PutPlayerID(p);
                     _initialData.Put((byte)(G.Tiles.GetLength(0) - 1));
                     _initialData.Put((byte)(G.Tiles.GetLength(1) - 1));
-                    for (var x = 0; x < G.Tiles.GetLength(0); x++)
-                        for (var y = 0; y < G.Tiles.GetLength(1); y++)
+                    _initialData.Put(0, G.MAX_MAP_ID, (int)G.MapId);
+                    for (var y = 0; y < G.Tiles.GetLength(1); y++)
+                        for (var x = 0; x < G.Tiles.GetLength(0); x++)
                             _initialData.Put(0, Tile.MAX_ID, (int)G.Tiles[x, y].ID);
                     static void PutPlayer(int j) {
                         _initialData.PutPlayerID(j);
@@ -188,6 +189,10 @@ namespace BombermanOnline {
             }
             if (RestartGameInTime > 0) {
                 if ((RestartGameInTime -= T.DeltaFull) <= 0) {
+                    Bombs.DespawnAll();
+                    Powers.DespawnAll();
+                    Anims.DespawnAll();
+                    Players.ResetAll();
                     var w = NetServer.CreatePacket(NetServer.Packets.RESTART_GAME);
                     var spawns = new List<Point> {
                         new Point(1, 1),
@@ -202,23 +207,25 @@ namespace BombermanOnline {
                         else
                             players[Players.Team[i]].Add(i);
                     }
-                    G.MakeMap(G.Tiles.GetLength(0), G.Tiles.GetLength(1));
+                    var mapId = G.MAP_IDS.SHALLOW_SEA;
+                    G.MakeMap(G.Tiles.GetLength(0), G.Tiles.GetLength(1), mapId);
                     w.Put((byte)(G.Tiles.GetLength(0) - 1));
                     w.Put((byte)(G.Tiles.GetLength(1) - 1));
+                    w.Put(0, G.MAX_MAP_ID, (int)G.MapId);
                     w.Put((byte)Players.TakenIDs.Count);
                     foreach (var t in players.Keys) {
                         getFreshSpawn : if (spawns.Count == 0) {
                             spawns.Add(new Point(1, G.Tiles.GetLength(1) / 2));
                             spawns.Add(new Point(G.Tiles.GetLength(0) - 2, G.Tiles.GetLength(1) / 2));
                             for (var i = -1; i <= 1; i++) {
-                                G.Tiles[1, G.Tiles.GetLength(1) / 2 + i].ID = Tile.IDS.grass;
-                                G.Tiles[G.Tiles.GetLength(0) - 2, G.Tiles.GetLength(1) / 2 + i].ID = Tile.IDS.grass;
+                                G.SetTile(1, G.Tiles.GetLength(1) / 2 + i, Tile.IDS.floor);
+                                G.SetTile(G.Tiles.GetLength(0) - 2, G.Tiles.GetLength(1) / 2 + i, Tile.IDS.floor);
                             }
                             spawns.Add(new Point(G.Tiles.GetLength(0) / 2, 1));
                             spawns.Add(new Point(G.Tiles.GetLength(0) / 2, G.Tiles.GetLength(1) - 2));
                             for (var i = -1; i <= 1; i++) {
-                                G.Tiles[G.Tiles.GetLength(0) / 2 + i, 1].ID = Tile.IDS.grass;
-                                G.Tiles[G.Tiles.GetLength(0) / 2 + i, G.Tiles.GetLength(1) - 2].ID = Tile.IDS.grass;
+                                G.SetTile(G.Tiles.GetLength(0) / 2 + i, 1, Tile.IDS.floor);
+                                G.SetTile(G.Tiles.GetLength(0) / 2 + i, G.Tiles.GetLength(1) - 2, Tile.IDS.floor);
                             }
                         }
                         var j = G.Rng.Next(spawns.Count);
@@ -235,14 +242,10 @@ namespace BombermanOnline {
                                 goto getFreshSpawn;
                         }
                     }
-                    for (var x = 0; x < G.Tiles.GetLength(0); x++)
-                        for (var y = 0; y < G.Tiles.GetLength(1); y++)
+                    for (var y = 0; y < G.Tiles.GetLength(1); y++)
+                        for (var x = 0; x < G.Tiles.GetLength(0); x++)
                             w.Put(0, Tile.MAX_ID, (int)G.Tiles[x, y].ID);
                     NetServer.SendToAll(w, LiteNetLib.DeliveryMethod.ReliableOrdered);
-                    Bombs.DespawnAll();
-                    Powers.DespawnAll();
-                    Anims.DespawnAll();
-                    Players.ResetAll();
                 }
             }
         }

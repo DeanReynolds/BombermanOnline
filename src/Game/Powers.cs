@@ -9,11 +9,17 @@ namespace BombermanOnline {
         public static readonly(IDS Power, float Weight)[] SPAWN = new [] {
             (IDS.FIRE_UP, 4),
             (IDS.BOMB_UP, 4),
-            (IDS.FULL_FIRE, 1),
+            (IDS.FULL_FIRE, .5f),
             (IDS.FIRE_DOWN, 2),
             (IDS.BOMB_DOWN, 2),
             (IDS.SKATE, 3),
-            (IDS.GETA, 3f),
+            (IDS.GETA, 3),
+            (IDS.BOMB_PIERCE, 1),
+            (IDS.BOMB_PIERCE_DOWN, .75f),
+            (IDS.GREEN_LOUIE, .25f),
+            (IDS.PINK_LOUIE, .25f),
+            (IDS.BLUE_LOUIE, .25f),
+            (IDS.BROWN_LOUIE, .25f)
         };
         public static readonly float TOTAL_SPAWN_WEIGHT;
 
@@ -27,7 +33,7 @@ namespace BombermanOnline {
         public static IDS[] ID { get; private set; }
         public static float[] SpawnTime { get; private set; }
 
-        public enum IDS : byte { FIRE_UP = 1, FIRE_DOWN = 2, FULL_FIRE = 3, BOMB_UP = 4, BOMB_DOWN = 5, POWER_BOMB = 6, SKATE = 7, GETA = 8, BOMB_KICK = 9, BOMB_PIERCE = 10, LOUIE = 11 }
+        public enum IDS : byte { FIRE_UP = 1, FIRE_DOWN = 2, FULL_FIRE = 3, BOMB_UP = 4, BOMB_DOWN = 5, POWER_BOMB = 6, SKATE = 7, GETA = 8, BOMB_KICK = 9, BOMB_PIERCE = 10, BOMB_PIERCE_DOWN = 11, GREEN_LOUIE = 12, BROWN_LOUIE = 13, PINK_LOUIE = 14, BLUE_LOUIE = 15 }
 
         public static void Init(int capacity) {
             XY = new Vector2[capacity];
@@ -76,7 +82,7 @@ namespace BombermanOnline {
             for (var i = 0; i < Count; i++) {
                 var s = G.Sprites[$"+{ID[i].ToString().ToLower()}"];
                 var timeAlive = T.Total - SpawnTime[i];
-                G.SB.Draw(G.Sprites.Texture, XY[i], s.Source, Color.White * (timeAlive <= 10 ? 1 : (timeAlive * 10 % MathF.Abs(25 - timeAlive) < 5)?.1f : 1), 0, s.Origin, .5f + (MathF.Sin((T.Total - SpawnTime[i] + 1) * 5) * .1f), 0, 0);
+                G.SB.Draw(G.Sprites.Texture, XY[i], s.Source, Color.White * (timeAlive <= 10 ? 1 : (timeAlive * 10 % MathF.Abs(25 - timeAlive) < 5)?.1f : 1), 0, s.Origin, .5f + (MathF.Sin((T.Total - SpawnTime[i] + 1) * 5) * .1f), 0, .1f);
             }
         }
 

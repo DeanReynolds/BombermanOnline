@@ -7,7 +7,8 @@ namespace BombermanOnline {
         public static readonly int MAX_ID = Enum.GetValues(typeof(IDS)).Length - 1;
 
         public IDS ID;
+        public SpriteAnim Anim;
 
-        public enum IDS { grass, wall, bound0, bound1 }
+        public enum IDS { floor, wall, bound }
     }
 }

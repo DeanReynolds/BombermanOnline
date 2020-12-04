@@ -186,14 +186,19 @@
         </struct>
         <key>individualSpriteSettings</key>
         <map type="IndividualSpriteSettingsMap">
+            <key type="filename">sprites/+blue_louie.png</key>
             <key type="filename">sprites/+bomb_down.png</key>
             <key type="filename">sprites/+bomb_kick.png</key>
             <key type="filename">sprites/+bomb_pierce.png</key>
+            <key type="filename">sprites/+bomb_pierce_down.png</key>
             <key type="filename">sprites/+bomb_up.png</key>
+            <key type="filename">sprites/+brown_louie.png</key>
             <key type="filename">sprites/+fire_down.png</key>
             <key type="filename">sprites/+fire_up.png</key>
             <key type="filename">sprites/+full_fire.png</key>
             <key type="filename">sprites/+geta.png</key>
+            <key type="filename">sprites/+green_louie.png</key>
+            <key type="filename">sprites/+pink_louie.png</key>
             <key type="filename">sprites/+power_bomb.png</key>
             <key type="filename">sprites/+skate.png</key>
             <struct type="IndividualSpriteSettings">
@@ -212,16 +217,19 @@
             </struct>
             <key type="filename">sprites/bomb.png</key>
             <key type="filename">sprites/bomb_spiked.png</key>
-            <key type="filename">sprites/bound0.png</key>
-            <key type="filename">sprites/bound1.png</key>
-            <key type="filename">sprites/grass.png</key>
-            <key type="filename">sprites/wall.png</key>
-            <key type="filename">sprites/wallblown0.png</key>
-            <key type="filename">sprites/wallblown1.png</key>
-            <key type="filename">sprites/wallblown2.png</key>
-            <key type="filename">sprites/wallblown3.png</key>
-            <key type="filename">sprites/wallblown4.png</key>
-            <key type="filename">sprites/wallblown5.png</key>
+            <key type="filename">sprites/s0bound.png</key>
+            <key type="filename">sprites/s0destruct.png</key>
+            <key type="filename">sprites/s0floor.png</key>
+            <key type="filename">sprites/s0solid.png</key>
+            <key type="filename">sprites/s1floor1.png</key>
+            <key type="filename">sprites/s1floor2.png</key>
+            <key type="filename">sprites/s1solid.png</key>
+            <key type="filename">sprites/s2destruct.png</key>
+            <key type="filename">sprites/s2solid.png</key>
+            <key type="filename">sprites/s3destruct.png</key>
+            <key type="filename">sprites/s3floor1.png</key>
+            <key type="filename">sprites/s3floor2.png</key>
+            <key type="filename">sprites/s3solid.png</key>
             <struct type="IndividualSpriteSettings">
                 <key>pivotPoint</key>
                 <point_f>0.5,0.5</point_f>
@@ -403,20 +411,27 @@
                 <key>scale9FromFile</key>
                 <false/>
             </struct>
+            <key type="filename">sprites/s1destruct0.png</key>
+            <key type="filename">sprites/s1destruct1.png</key>
+            <key type="filename">sprites/s1destruct2.png</key>
+            <struct type="IndividualSpriteSettings">
+                <key>pivotPoint</key>
+                <point_f>0.5,0.5</point_f>
+                <key>spriteScale</key>
+                <double>1</double>
+                <key>scale9Enabled</key>
+                <false/>
+                <key>scale9Borders</key>
+                <rect>4,4,7,8</rect>
+                <key>scale9Paddings</key>
+                <rect>4,4,7,8</rect>
+                <key>scale9FromFile</key>
+                <false/>
+            </struct>
         </map>
         <key>fileList</key>
         <array>
             <filename>sprites/bomb.png</filename>
-            <filename>sprites/bound0.png</filename>
-            <filename>sprites/bound1.png</filename>
-            <filename>sprites/grass.png</filename>
-            <filename>sprites/wall.png</filename>
-            <filename>sprites/wallblown0.png</filename>
-            <filename>sprites/wallblown1.png</filename>
-            <filename>sprites/wallblown2.png</filename>
-            <filename>sprites/wallblown3.png</filename>
-            <filename>sprites/wallblown4.png</filename>
-            <filename>sprites/wallblown5.png</filename>
             <filename>sprites/+bomb_down.png</filename>
             <filename>sprites/+bomb_kick.png</filename>
             <filename>sprites/+bomb_pierce.png</filename>
@@ -483,6 +498,27 @@
             <filename>sprites/lbr20.png</filename>
             <filename>sprites/lbr21.png</filename>
             <filename>sprites/lbr22.png</filename>
+            <filename>sprites/s0destruct.png</filename>
+            <filename>sprites/s0floor.png</filename>
+            <filename>sprites/s0solid.png</filename>
+            <filename>sprites/s0bound.png</filename>
+            <filename>sprites/s1destruct0.png</filename>
+            <filename>sprites/s1destruct1.png</filename>
+            <filename>sprites/s1destruct2.png</filename>
+            <filename>sprites/s1solid.png</filename>
+            <filename>sprites/s1floor1.png</filename>
+            <filename>sprites/s1floor2.png</filename>
+            <filename>sprites/s2destruct.png</filename>
+            <filename>sprites/s2solid.png</filename>
+            <filename>sprites/s3solid.png</filename>
+            <filename>sprites/s3floor1.png</filename>
+            <filename>sprites/s3floor2.png</filename>
+            <filename>sprites/s3destruct.png</filename>
+            <filename>sprites/+blue_louie.png</filename>
+            <filename>sprites/+bomb_pierce_down.png</filename>
+            <filename>sprites/+brown_louie.png</filename>
+            <filename>sprites/+green_louie.png</filename>
+            <filename>sprites/+pink_louie.png</filename>
         </array>
         <key>ignoreFileList</key>
         <array/>

@@ -18,7 +18,7 @@ namespace BombermanOnline {
 
         enum EXPLOSION_DIR : byte { INTERSECTION = 0, NORTH = 1, EAST = 2, VERT = 3, HORIZ = 4, WEST = 5, SOUTH = 6 }
 
-        static SpriteAnim ExplosionIntersection, ExplosionNorth, ExplosionEast, ExplosionVert, ExplosionHoriz, ExplosionWest, ExplosionSouth, WallExplosion;
+        static SpriteAnim ExplosionIntersection, ExplosionNorth, ExplosionEast, ExplosionVert, ExplosionHoriz, ExplosionWest, ExplosionSouth;
         static(int X, int Y, Powers.IDS Power)[] _powersSpawned;
         static int _powersSpawnedCount;
 
@@ -32,8 +32,7 @@ namespace BombermanOnline {
             var s = new [] {
                 G.Sprites["ex00"], G.Sprites["ex01"], G.Sprites["ex02"], G.Sprites["ex03"], G.Sprites["ex04"],
                 G.Sprites["ex10"], G.Sprites["ex11"], G.Sprites["ex12"], G.Sprites["ex13"], G.Sprites["ex14"],
-                G.Sprites["ex20"], G.Sprites["ex21"], G.Sprites["ex22"], G.Sprites["ex23"], G.Sprites["ex24"],
-                G.Sprites["wallblown0"], G.Sprites["wallblown1"], G.Sprites["wallblown2"], G.Sprites["wallblown3"], G.Sprites["wallblown4"], G.Sprites["wallblown5"]
+                G.Sprites["ex20"], G.Sprites["ex21"], G.Sprites["ex22"], G.Sprites["ex23"], G.Sprites["ex24"]
             };
             const float HALF_PI = MathF.PI / 2,
                 SPLOSION_SPEED = 1;
@@ -48,7 +47,6 @@ namespace BombermanOnline {
             ExplosionSouth.Rotation = HALF_PI;
             ExplosionNorth = ExplosionEast;
             ExplosionNorth.Rotation = -HALF_PI;
-            WallExplosion = new SpriteAnim(false, SPLOSION_SPEED, 0, 1, 0, s[15], s[16], s[17], s[18], s[19], s[20]);
             _powersSpawned = new(int, int, Powers.IDS)[100];
         }
 
@@ -60,6 +58,8 @@ namespace BombermanOnline {
             SpawnTime[i] = T.Total;
             Power[i] = Players.Stats[owner].Fire;
             Owner[i] = (byte)owner;
+            if (Players.Flags[owner].HasFlag(Players.FLAGS.BOMBS_CAN_PIERCE))
+                Flags[i] |= FLAGS.HAS_PIERCE;
             Players.Stats[owner].BombsInPlay++;
             return i;
         }
@@ -126,8 +126,8 @@ namespace BombermanOnline {
         public static void Draw() {
             for (var i = 0; i < Count; i++) {
                 var xy = new Vector2((int)XY[i].X + Tile.HALF_SIZE, (int)XY[i].Y + Tile.HALF_SIZE);
-                var s = G.Sprites[$"bomb"];
-                G.SB.Draw(G.Sprites.Texture, xy, s.Source, Color.White, 0, s.Origin, .8f + (MathF.Sin((T.Total - SpawnTime[i] + 1) * 5) * .15f), 0, 0);
+                var s = Flags[i].HasFlag(FLAGS.HAS_PIERCE) ? G.Sprites[$"bomb_spiked"] : G.Sprites[$"bomb"];
+                G.SB.Draw(G.Sprites.Texture, xy, s.Source, Color.White, 0, s.Origin, .8f + (MathF.Sin((T.Total - SpawnTime[i] + 1) * 5) * .15f), 0, .01f);
             }
         }
 
@@ -157,6 +157,7 @@ namespace BombermanOnline {
                         anim = ExplosionVert;
                         break;
                 }
+                anim.Layer = .4f;
                 Anims.Spawn(xy, anim, G.Sprites.Texture);
             }
             static Powers.IDS SpawnPower(int x, int y) {
@@ -172,6 +173,16 @@ namespace BombermanOnline {
                 Powers.Spawn(x, y, power);
                 return power;
             }
+            static void DestroyWall(int x, int y) {
+                var anim = G.Tiles[x, y].Anim;
+                anim.ScaleGainSub = 12;
+                anim.ScaleGainSubGain = -60;
+                anim.FinishMode = SpriteAnim.FINISH_MODE.NO_SCALE;
+                anim.Tint = Color.Red * .85f;
+                anim.Layer = .05f;
+                Anims.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), anim, G.Sprites.Texture);
+                G.SetTile(x, y, Tile.IDS.floor);
+            }
             Flags[i] |= FLAGS.HAS_EXPLODED;
             int x = (int)XY[i].X >> Tile.BITS_PER_SIZE,
                 y = (int)XY[i].Y >> Tile.BITS_PER_SIZE;
@@ -179,81 +190,80 @@ namespace BombermanOnline {
                 continueRight = true,
                 continueDown = true,
                 continueLeft = true;
-            if (!Flags[i].HasFlag(FLAGS.HAS_PIERCE))
-                for (var j = 1; j <= Power[i]; j++) {
-                    if (continueUp) {
-                        var ry = y - j;
-                        if (HasBomb(x, ry, out var k)) {
+            for (var j = 1; j <= Power[i]; j++) {
+                if (continueUp) {
+                    var ry = y - j;
+                    if (HasBomb(x, ry, out var k)) {
+                        continueUp = false;
+                        if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
+                            Explode(k);
+                    } else if (G.Tiles[x, ry].ID == Tile.IDS.wall) {
+                        DestroyWall(x, ry);
+                        SpawnPower(x, ry);
+                        if (!Flags[i].HasFlag(FLAGS.HAS_PIERCE))
                             continueUp = false;
-                            if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
-                                Explode(k);
-                        } else if (G.Tiles[x, ry].ID == Tile.IDS.wall) {
-                            G.Tiles[x, ry].ID = Tile.IDS.grass;
-                            Anims.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (ry << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion, G.Sprites.Texture);
-                            SpawnPower(x, ry);
-                            continueUp = false;
-                        } else if (G.IsTileSolid(x, ry))
-                            continueUp = false;
-                        else {
-                            SpawnExplosion(x, ry, j != Power[i] ? EXPLOSION_DIR.VERT : EXPLOSION_DIR.NORTH);
-                            Players.TryKillAt(x, ry);
-                        }
-                    }
-                    if (continueRight) {
-                        var rx = x + j;
-                        if (HasBomb(rx, y, out var k)) {
-                            continueRight = false;
-                            if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
-                                Explode(k);
-                        } else if (G.Tiles[rx, y].ID == Tile.IDS.wall) {
-                            G.Tiles[rx, y].ID = Tile.IDS.grass;
-                            Anims.Spawn(new Vector2((rx << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion, G.Sprites.Texture);
-                            SpawnPower(rx, y);
-                            continueRight = false;
-                        } else if (G.IsTileSolid(rx, y))
-                            continueRight = false;
-                        else {
-                            SpawnExplosion(rx, y, j != Power[i] ? EXPLOSION_DIR.HORIZ : EXPLOSION_DIR.EAST);
-                            Players.TryKillAt(rx, y);
-                        }
-                    }
-                    if (continueDown) {
-                        var ry = y + j;
-                        if (HasBomb(x, ry, out var k)) {
-                            continueDown = false;
-                            if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
-                                Explode(k);
-                        } else if (G.Tiles[x, ry].ID == Tile.IDS.wall) {
-                            G.Tiles[x, ry].ID = Tile.IDS.grass;
-                            Anims.Spawn(new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (ry << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion, G.Sprites.Texture);
-                            SpawnPower(x, ry);
-                            continueDown = false;
-                        } else if (G.IsTileSolid(x, ry))
-                            continueDown = false;
-                        else {
-                            SpawnExplosion(x, ry, j != Power[i] ? EXPLOSION_DIR.VERT : EXPLOSION_DIR.SOUTH);
-                            Players.TryKillAt(x, ry);
-                        }
-                    }
-                    if (continueLeft) {
-                        var rx = x - j;
-                        if (HasBomb(rx, y, out var k)) {
-                            continueLeft = false;
-                            if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
-                                Explode(k);
-                        } else if (G.Tiles[rx, y].ID == Tile.IDS.wall) {
-                            G.Tiles[rx, y].ID = Tile.IDS.grass;
-                            Anims.Spawn(new Vector2((rx << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE), WallExplosion, G.Sprites.Texture);
-                            SpawnPower(rx, y);
-                            continueLeft = false;
-                        } else if (G.IsTileSolid(rx, y))
-                            continueLeft = false;
-                        else {
-                            SpawnExplosion(rx, y, j != Power[i] ? EXPLOSION_DIR.HORIZ : EXPLOSION_DIR.WEST);
-                            Players.TryKillAt(rx, y);
-                        }
+                    } else if (G.IsTileSolid(x, ry))
+                        continueUp = false;
+                    else {
+                        SpawnExplosion(x, ry, j != Power[i] ? EXPLOSION_DIR.VERT : EXPLOSION_DIR.NORTH);
+                        Players.TryKillAt(x, ry);
                     }
                 }
+                if (continueRight) {
+                    var rx = x + j;
+                    if (HasBomb(rx, y, out var k)) {
+                        continueRight = false;
+                        if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
+                            Explode(k);
+                    } else if (G.Tiles[rx, y].ID == Tile.IDS.wall) {
+                        DestroyWall(rx, y);
+                        SpawnPower(rx, y);
+                        if (!Flags[i].HasFlag(FLAGS.HAS_PIERCE))
+                            continueRight = false;
+                    } else if (G.IsTileSolid(rx, y))
+                        continueRight = false;
+                    else {
+                        SpawnExplosion(rx, y, j != Power[i] ? EXPLOSION_DIR.HORIZ : EXPLOSION_DIR.EAST);
+                        Players.TryKillAt(rx, y);
+                    }
+                }
+                if (continueDown) {
+                    var ry = y + j;
+                    if (HasBomb(x, ry, out var k)) {
+                        continueDown = false;
+                        if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
+                            Explode(k);
+                    } else if (G.Tiles[x, ry].ID == Tile.IDS.wall) {
+                        DestroyWall(x, ry);
+                        SpawnPower(x, ry);
+                        if (!Flags[i].HasFlag(FLAGS.HAS_PIERCE))
+                            continueDown = false;
+                    } else if (G.IsTileSolid(x, ry))
+                        continueDown = false;
+                    else {
+                        SpawnExplosion(x, ry, j != Power[i] ? EXPLOSION_DIR.VERT : EXPLOSION_DIR.SOUTH);
+                        Players.TryKillAt(x, ry);
+                    }
+                }
+                if (continueLeft) {
+                    var rx = x - j;
+                    if (HasBomb(rx, y, out var k)) {
+                        continueLeft = false;
+                        if (!Flags[k].HasFlag(FLAGS.HAS_EXPLODED))
+                            Explode(k);
+                    } else if (G.Tiles[rx, y].ID == Tile.IDS.wall) {
+                        DestroyWall(rx, y);
+                        SpawnPower(rx, y);
+                        if (!Flags[i].HasFlag(FLAGS.HAS_PIERCE))
+                            continueLeft = false;
+                    } else if (G.IsTileSolid(rx, y))
+                        continueLeft = false;
+                    else {
+                        SpawnExplosion(rx, y, j != Power[i] ? EXPLOSION_DIR.HORIZ : EXPLOSION_DIR.WEST);
+                        Players.TryKillAt(rx, y);
+                    }
+                }
+            }
             SpawnExplosion(x, y, EXPLOSION_DIR.INTERSECTION);
             Players.TryKillAt(x, y);
             GameScr.Explode.Play();

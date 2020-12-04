@@ -38,10 +38,13 @@ namespace BombermanOnline {
                 if (_initialDataState == 0) {
                     Players.Init(_r.ReadByte() + 1);
                     Players.SpawnLocal(_r.ReadPlayerID());
-                    G.MakeMap(_r.ReadByte() + 1, _r.ReadByte() + 1);
-                    for (var x = 0; x < G.Tiles.GetLength(0); x++)
-                        for (var y = 0; y < G.Tiles.GetLength(1); y++)
-                            G.Tiles[x, y].ID = (Tile.IDS)_r.ReadInt(0, Tile.MAX_ID);
+                    G.MakeMap(_r.ReadByte() + 1, _r.ReadByte() + 1, (G.MAP_IDS)_r.ReadInt(0, G.MAX_MAP_ID));
+                    for (var y = 0; y < G.Tiles.GetLength(1); y++)
+                        for (var x = 0; x < G.Tiles.GetLength(0); x++) {
+                            var tileId = (Tile.IDS)_r.ReadInt(0, Tile.MAX_ID);
+                            if (G.Tiles[x, y].ID != tileId)
+                                G.SetTile(x, y, tileId);
+                        }
                     while (!_r.EndOfData) {
                         int i = _r.ReadPlayerID();
                         Players.Spawn(i);
@@ -135,16 +138,19 @@ namespace BombermanOnline {
                         Powers.DespawnAll();
                         Anims.DespawnAll();
                         Players.ResetAll();
-                        G.MakeMap(_r.ReadByte() + 1, _r.ReadByte() + 1);
+                        G.MakeMap(_r.ReadByte() + 1, _r.ReadByte() + 1, (G.MAP_IDS)_r.ReadInt(0, G.MAX_MAP_ID));
                         var players = _r.ReadByte();
                         for (var i = 0; i < players; i++) {
                             var j = _r.ReadPlayerID();
                             _r.ReadTileXY(out var x, out var y);
                             Players.XY[j] = new Vector2((x << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE, (y << Tile.BITS_PER_SIZE) + Tile.HALF_SIZE);
                         }
-                        for (var x = 0; x < G.Tiles.GetLength(0); x++)
-                            for (var y = 0; y < G.Tiles.GetLength(1); y++)
-                                G.Tiles[x, y].ID = (Tile.IDS)_r.ReadInt(0, Tile.MAX_ID);
+                        for (var y = 0; y < G.Tiles.GetLength(1); y++)
+                            for (var x = 0; x < G.Tiles.GetLength(0); x++) {
+                                var tileId = (Tile.IDS)_r.ReadInt(0, Tile.MAX_ID);
+                                if (G.Tiles[x, y].ID != tileId)
+                                    G.SetTile(x, y, tileId);
+                            }
                     }
                 }
             };
